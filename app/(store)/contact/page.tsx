@@ -4,9 +4,12 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Mail, Phone, MapPin, MessageCircle, ChevronDown, Send } from 'lucide-react'
 import { useToastStore } from '@/components/toast'
+import { useLanguageStore, t as translate } from '@/lib/language-store'
 
 export default function ContactPage() {
   const { addToast } = useToastStore()
+  const { language } = useLanguageStore()
+  const isRTL = language === 'ar'
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -19,43 +22,43 @@ export default function ContactPage() {
     e.preventDefault()
     addToast({
       type: 'success',
-      message: 'Message sent!',
-      description: 'We\'ll get back to you within 24 hours.',
+      message: translate(language, 'contact.message-sent'),
+      description: translate(language, 'contact.message-sent-desc'),
     })
     setFormData({ name: '', email: '', subject: '', message: '' })
   }
 
   const faqs = [
     {
-      question: 'How do I track my order?',
-      answer: 'Once your order ships, you\'ll receive an email with a tracking number. You can also track your order in your account under "Orders".',
+      question: translate(language, 'contact.faq.track.question'),
+      answer: translate(language, 'contact.faq.track.answer'),
     },
     {
-      question: 'What is your return policy?',
-      answer: 'We offer free returns within 30 days of purchase for unworn items in original packaging. Contact us to initiate a return.',
+      question: translate(language, 'contact.faq.return.question'),
+      answer: translate(language, 'contact.faq.return.answer'),
     },
     {
-      question: 'Are all sneakers authentic?',
-      answer: 'Yes! Every sneaker goes through our rigorous authentication process. We guarantee 100% authenticity or your money back.',
+      question: translate(language, 'contact.faq.authentic.question'),
+      answer: translate(language, 'contact.faq.authentic.answer'),
     },
     {
-      question: 'How long does shipping take?',
-      answer: 'Standard shipping takes 5-7 business days. Express (2-3 days) and overnight options are available at checkout.',
+      question: translate(language, 'contact.faq.shipping.question'),
+      answer: translate(language, 'contact.faq.shipping.answer'),
     },
     {
-      question: 'Do you ship internationally?',
-      answer: 'Yes! We ship to over 100 countries. International shipping typically takes 7-14 business days.',
+      question: translate(language, 'contact.faq.international.question'),
+      answer: translate(language, 'contact.faq.international.answer'),
     },
     {
-      question: 'How do I know my size?',
-      answer: 'Check our size guide on each product page. If you\'re between sizes, we recommend going up for a more comfortable fit.',
+      question: translate(language, 'contact.faq.size.question'),
+      answer: translate(language, 'contact.faq.size.answer'),
     },
   ]
 
   const contactInfo = [
-    { icon: Mail, label: 'Email', value: 'support@snkrvault.com', href: 'mailto:support@snkrvault.com' },
-    { icon: Phone, label: 'Phone', value: '+1 (555) 123-4567', href: 'tel:+15551234567' },
-    { icon: MapPin, label: 'Address', value: '123 Sneaker Street, New York, NY 10001', href: '#' },
+    { icon: Mail, label: translate(language, 'contact.info.email'), value: 'support@snkrvault.com', href: 'mailto:support@snkrvault.com' },
+    { icon: Phone, label: translate(language, 'contact.info.phone'), value: '+1 (555) 123-4567', href: 'tel:+15551234567' },
+    { icon: MapPin, label: translate(language, 'contact.info.address'), value: '123 Sneaker Street, New York, NY 10001', href: '#' },
   ]
 
   return (
@@ -67,76 +70,80 @@ export default function ContactPage() {
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-16"
         >
-          <h1 className="text-4xl md:text-5xl font-display tracking-wider">CONTACT US</h1>
+          <h1 className="text-4xl md:text-5xl font-display tracking-wider">{translate(language, 'contact.title')}</h1>
           <p className="text-muted-foreground mt-4 max-w-xl mx-auto">
-            Have a question or need help? We&apos;re here for you.
+            {translate(language, 'contact.description')}
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-24">
+        <div className={`grid grid-cols-1 lg:grid-cols-2 gap-12 mb-24 ${isRTL ? 'rtl:grid-flow-row-dense' : ''}`}>
           {/* Contact Form */}
           <motion.div
-            initial={{ opacity: 0, x: -40 }}
+            initial={{ opacity: 0, x: isRTL ? 40 : -40 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.2 }}
           >
             <div className="bg-card rounded-2xl p-8">
-              <h2 className="text-2xl font-semibold mb-6">Send us a message</h2>
+              <h2 className={`text-2xl font-semibold mb-6 ${isRTL ? 'text-right' : ''}`}>{translate(language, 'contact.form-title')}</h2>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2">Name</label>
+                  <label className={`block text-sm font-medium mb-2 ${isRTL ? 'text-right' : ''}`}>{translate(language, 'contact.name')}</label>
                   <input
                     type="text"
                     value={formData.name}
                     onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                     required
+                    dir={isRTL ? 'rtl' : 'ltr'}
                     className="w-full px-4 py-3 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
-                    placeholder="Your name"
+                    placeholder={translate(language, 'contact.name-placeholder')}
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-2">Email</label>
+                  <label className={`block text-sm font-medium mb-2 ${isRTL ? 'text-right' : ''}`}>{translate(language, 'contact.email')}</label>
                   <input
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
                     required
+                    dir="ltr"
                     className="w-full px-4 py-3 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
-                    placeholder="your@email.com"
+                    placeholder={translate(language, 'contact.email-placeholder')}
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-2">Subject</label>
+                  <label className={`block text-sm font-medium mb-2 ${isRTL ? 'text-right' : ''}`}>{translate(language, 'contact.subject')}</label>
                   <select
                     value={formData.subject}
                     onChange={(e) => setFormData(prev => ({ ...prev, subject: e.target.value }))}
                     required
+                    dir={isRTL ? 'rtl' : 'ltr'}
                     className="w-full px-4 py-3 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
                   >
-                    <option value="">Select a topic</option>
-                    <option value="order">Order Inquiry</option>
-                    <option value="product">Product Question</option>
-                    <option value="return">Returns & Exchanges</option>
-                    <option value="other">Other</option>
+                    <option value="">{translate(language, 'contact.select-topic')}</option>
+                    <option value="order">{translate(language, 'contact.topic.order')}</option>
+                    <option value="product">{translate(language, 'contact.topic.product')}</option>
+                    <option value="return">{translate(language, 'contact.topic.return')}</option>
+                    <option value="other">{translate(language, 'contact.topic.other')}</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-2">Message</label>
+                  <label className={`block text-sm font-medium mb-2 ${isRTL ? 'text-right' : ''}`}>{translate(language, 'contact.message')}</label>
                   <textarea
                     value={formData.message}
                     onChange={(e) => setFormData(prev => ({ ...prev, message: e.target.value }))}
                     required
                     rows={5}
+                    dir={isRTL ? 'rtl' : 'ltr'}
                     className="w-full px-4 py-3 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent resize-none"
-                    placeholder="How can we help you?"
+                    placeholder={translate(language, 'contact.message-placeholder')}
                   />
                 </div>
                 <button
                   type="submit"
-                  className="w-full py-4 bg-accent text-accent-foreground font-semibold rounded-lg flex items-center justify-center gap-2 hover:bg-accent/90 transition-colors"
+                  className={`w-full py-4 bg-accent text-accent-foreground font-semibold rounded-lg flex items-center justify-center gap-2 hover:bg-accent/90 transition-colors ${isRTL ? 'flex-row-reverse' : ''}`}
                 >
                   <Send className="w-5 h-5" />
-                  Send Message
+                  {translate(language, 'contact.send')}
                 </button>
               </form>
             </div>
@@ -144,19 +151,19 @@ export default function ContactPage() {
 
           {/* Contact Info & Map */}
           <motion.div
-            initial={{ opacity: 0, x: 40 }}
+            initial={{ opacity: 0, x: isRTL ? -40 : 40 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3 }}
             className="space-y-8"
           >
             <div className="bg-card rounded-2xl p-8">
-              <h2 className="text-2xl font-semibold mb-6">Get in touch</h2>
+              <h2 className="text-2xl font-semibold mb-6">{translate(language, 'contact.get-in-touch')}</h2>
               <div className="space-y-6">
                 {contactInfo.map((item) => (
                   <a
                     key={item.label}
                     href={item.href}
-                    className="flex items-start gap-4 group"
+                    className={`flex items-start gap-4 group ${isRTL ? 'flex-row-reverse' : ''}`}
                   >
                     <div className="p-3 bg-accent/10 rounded-lg group-hover:bg-accent/20 transition-colors">
                       <item.icon className="w-5 h-5 text-accent" />
@@ -172,18 +179,26 @@ export default function ContactPage() {
               </div>
             </div>
 
-            {/* Map placeholder */}
-            <div className="bg-card rounded-2xl p-8 h-64 flex items-center justify-center">
-              <div className="text-center">
-                <MapPin className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground">Interactive map coming soon</p>
+            {/* Interactive Map */}
+            <div className="bg-card rounded-2xl p-8 overflow-hidden">
+              <h2 className="text-2xl font-semibold mb-6">{translate(language, 'contact.location')}</h2>
+              <div className="h-64 rounded-xl overflow-hidden border border-border">
+                <iframe
+                  src="https://www.openstreetmap.org/export/embed.html?bbox=-74.02,40.70,-73.99,40.73&layer=mapnik&marker=40.7128,-74.0060"
+                  width="100%"
+                  height="100%"
+                  style={{ border: 0 }}
+                  allowFullScreen
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                />
               </div>
             </div>
 
             {/* Live Chat */}
-            <button className="w-full py-4 bg-secondary text-secondary-foreground font-semibold rounded-xl flex items-center justify-center gap-2 hover:bg-secondary/80 transition-colors">
+            <button className={`w-full py-4 bg-secondary text-secondary-foreground font-semibold rounded-xl flex items-center justify-center gap-2 hover:bg-secondary/80 transition-colors ${isRTL ? 'flex-row-reverse' : ''}`}>
               <MessageCircle className="w-5 h-5" />
-              Start Live Chat
+              {translate(language, 'contact.live-chat')}
             </button>
           </motion.div>
         </div>
@@ -197,7 +212,7 @@ export default function ContactPage() {
             className="text-center mb-12"
           >
             <h2 className="text-3xl md:text-4xl font-display tracking-wider">
-              FREQUENTLY ASKED QUESTIONS
+              {translate(language, 'contact.faq.title')}
             </h2>
           </motion.div>
 
@@ -213,9 +228,9 @@ export default function ContactPage() {
               >
                 <button
                   onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                  className="w-full flex items-center justify-between p-6 text-left"
+                  className={`w-full flex items-center justify-between p-6 text-start ${isRTL ? 'flex-row-reverse' : ''}`}
                 >
-                  <span className="font-medium pr-4">{faq.question}</span>
+                  <span className={`font-medium ${isRTL ? 'pl-4' : 'pr-4'}`}>{faq.question}</span>
                   <ChevronDown
                     className={`w-5 h-5 flex-shrink-0 transition-transform ${
                       openFaq === i ? 'rotate-180' : ''

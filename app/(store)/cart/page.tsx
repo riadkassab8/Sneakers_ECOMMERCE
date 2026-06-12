@@ -5,21 +5,18 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { ShoppingBag, Minus, Plus, Trash2, ArrowRight } from 'lucide-react'
 import { useCartStore } from '@/lib/store'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { ProductCard } from '@/components/product-card'
 import { products } from '@/lib/products'
+import { useLanguageStore, t as translate } from '@/lib/language-store'
 
 export default function CartPage() {
+  const { language } = useLanguageStore()
+  const isRTL = language === 'ar'
   const { items, removeItem, updateQuantity, getTotal, clearCart } = useCartStore()
   const [promoCode, setPromoCode] = useState('')
   const [discount, setDiscount] = useState(0)
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  const subtotal = mounted ? getTotal() : 0
+  const subtotal = getTotal()
   const shipping = subtotal > 150 ? 0 : 12.99
   const total = subtotal - discount + shipping
 
@@ -33,14 +30,6 @@ export default function CartPage() {
     }
   }
 
-  if (!mounted) {
-    return (
-      <div className="min-h-screen pt-24 flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-accent border-t-transparent rounded-full animate-spin" />
-      </div>
-    )
-  }
-
   return (
     <div className="min-h-screen pt-24 pb-20">
       <div className="container mx-auto px-4">
@@ -49,7 +38,7 @@ export default function CartPage() {
           animate={{ opacity: 1, y: 0 }}
           className="text-4xl md:text-5xl font-display tracking-wider mb-8"
         >
-          YOUR CART
+          {translate(language, 'cart.title') || 'YOUR CART'}
         </motion.h1>
 
         {items.length === 0 ? (
@@ -65,20 +54,20 @@ export default function CartPage() {
             >
               <ShoppingBag className="w-24 h-24 mx-auto text-muted-foreground" />
             </motion.div>
-            <h2 className="text-2xl font-semibold mb-4">Your cart is empty</h2>
+            <h2 className="text-2xl font-semibold mb-4">{translate(language, 'cart.empty') || 'Your cart is empty' || 'Your cart is empty'}</h2>
             <p className="text-muted-foreground mb-8">
-              Looks like you haven&apos;t added any sneakers to your cart yet.
+              {translate(language, 'cart.empty-desc') || 'Looks like you haven\'t added any sneakers to your cart yet.' || 'Looks like you haven\'t added any sneakers to your cart yet.'}
             </p>
             <Link
               href="/shop"
-              className="inline-flex items-center gap-2 px-8 py-4 bg-accent text-accent-foreground font-semibold rounded-full hover:bg-accent/90 transition-colors"
+              className={`inline-flex items-center gap-2 px-8 py-4 bg-accent text-accent-foreground font-semibold rounded-full hover:bg-accent/90 transition-colors ${isRTL ? 'flex-row-reverse' : ''}`}
             >
-              Start Shopping
-              <ArrowRight className="w-5 h-5" />
+              {translate(language, 'cart.start-shopping')}
+              {isRTL ? <ArrowRight className="w-5 h-5 rotate-180" /> : <ArrowRight className="w-5 h-5" />}
             </Link>
           </motion.div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+          <div className={`grid grid-cols-1 lg:grid-cols-3 gap-12 ${isRTL ? 'rtl:grid-flow-row-dense' : ''}`}>
             {/* Cart Items */}
             <div className="lg:col-span-2 space-y-6">
               {items.map((item, i) => (
@@ -87,7 +76,7 @@ export default function CartPage() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.1 }}
-                  className="flex gap-6 p-6 bg-card rounded-2xl"
+                  className={`flex gap-6 p-6 bg-card rounded-2xl ${isRTL ? 'flex-row-reverse' : ''}`}
                 >
                   <Link
                     href={`/product/${item.product.id}`}
@@ -101,7 +90,7 @@ export default function CartPage() {
                     />
                   </Link>
                   <div className="flex-1 min-w-0">
-                    <div className="flex justify-between">
+                    <div className={`flex justify-between ${isRTL ? 'flex-row-reverse' : ''}`}>
                       <div>
                         <p className="text-sm text-muted-foreground">{item.product.brand}</p>
                         <Link href={`/product/${item.product.id}`}>
@@ -110,21 +99,21 @@ export default function CartPage() {
                           </h3>
                         </Link>
                         <p className="text-sm text-muted-foreground">{item.product.colorway}</p>
-                        <p className="text-sm text-muted-foreground">Size: {item.size}</p>
+                        <p className="text-sm text-muted-foreground">{translate(language, 'product.size')}: {item.size}</p>
                       </div>
-                      <div className="text-right">
+                      <div className={`text-right ${isRTL ? 'text-left' : 'text-right'}`}>
                         <p className="font-semibold text-lg">
-                          ${((item.product.salePrice || item.product.price) * item.quantity).toFixed(2)}
+                          {((item.product.salePrice || item.product.price) * item.quantity).toLocaleString()} ج.م
                         </p>
                         {item.product.salePrice && (
                           <p className="text-sm text-muted-foreground line-through">
-                            ${(item.product.price * item.quantity).toFixed(2)}
+                            {(item.product.price * item.quantity).toLocaleString()} ج.م
                           </p>
                         )}
                       </div>
                     </div>
-                    <div className="flex items-center justify-between mt-4">
-                      <div className="flex items-center gap-3">
+                    <div className={`flex items-center justify-between mt-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                      <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
                         <button
                           onClick={() => updateQuantity(item.product.id, item.size, item.quantity - 1)}
                           className="p-2 bg-secondary rounded-lg hover:bg-secondary/80 transition-colors"
@@ -141,10 +130,10 @@ export default function CartPage() {
                       </div>
                       <button
                         onClick={() => removeItem(item.product.id, item.size)}
-                        className="flex items-center gap-2 text-sm text-destructive hover:underline"
+                        className={`flex items-center gap-2 text-sm text-destructive hover:underline ${isRTL ? 'flex-row-reverse' : ''}`}
                       >
                         <Trash2 className="w-4 h-4" />
-                        Remove
+                        {translate(language, 'cart.remove')}
                       </button>
                     </div>
                   </div>
@@ -155,64 +144,64 @@ export default function CartPage() {
                 onClick={clearCart}
                 className="text-sm text-muted-foreground hover:text-destructive transition-colors"
               >
-                Clear Cart
+                {translate(language, 'cart.clear-all')}
               </button>
             </div>
 
             {/* Order Summary */}
             <div className="lg:col-span-1">
               <div className="sticky top-24 bg-card rounded-2xl p-6 space-y-6">
-                <h2 className="text-xl font-semibold">Order Summary</h2>
+                <h2 className="text-xl font-semibold">{translate(language, 'cart.summary') || 'Order Summary' || 'Order Summary'}</h2>
 
                 {/* Promo Code */}
                 <div>
-                  <label className="text-sm font-medium block mb-2">Promo Code</label>
-                  <div className="flex gap-2">
+                  <label className="text-sm font-medium block mb-2">{translate(language, 'cart.promo-code')}</label>
+                  <div className={`flex gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
                     <input
                       type="text"
                       value={promoCode}
                       onChange={(e) => setPromoCode(e.target.value)}
-                      placeholder="Enter code"
+                      placeholder={translate(language, 'cart.enter-code')}
                       className="flex-1 px-4 py-3 bg-input border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent"
                     />
                     <button
                       onClick={applyPromoCode}
                       className="px-4 py-3 bg-secondary text-secondary-foreground font-medium rounded-lg hover:bg-secondary/80 transition-colors"
                     >
-                      Apply
+                      {translate(language, 'cart.apply')}
                     </button>
                   </div>
                   {discount > 0 && (
-                    <p className="text-sm text-green-500 mt-2">Promo code applied!</p>
+                    <p className="text-sm text-green-500 mt-2">{translate(language, 'cart.promo-applied') || 'Promo code applied!'}</p>
                   )}
                 </div>
 
                 {/* Totals */}
                 <div className="space-y-3 py-4 border-t border-b border-border">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Subtotal</span>
-                    <span>${subtotal.toFixed(2)}</span>
+                  <div className={`flex justify-between ${isRTL ? 'flex-row-reverse' : ''}`}>
+                    <span className="text-muted-foreground">{translate(language, 'cart.subtotal')}</span>
+                    <span>{subtotal.toLocaleString()} ج.م</span>
                   </div>
                   {discount > 0 && (
-                    <div className="flex justify-between text-green-500">
-                      <span>Discount</span>
-                      <span>-${discount.toFixed(2)}</span>
+                    <div className={`flex justify-between text-green-500 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                      <span>{translate(language, 'cart.discount')}</span>
+                      <span>-{discount.toLocaleString()} ج.م</span>
                     </div>
                   )}
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Shipping</span>
-                    <span>{shipping === 0 ? 'Free' : `$${shipping.toFixed(2)}`}</span>
+                  <div className={`flex justify-between ${isRTL ? 'flex-row-reverse' : ''}`}>
+                    <span className="text-muted-foreground">{translate(language, 'cart.shipping')}</span>
+                    <span>{shipping === 0 ? translate(language, 'cart.free') : `${shipping.toLocaleString()} ج.م`}</span>
                   </div>
                 </div>
 
-                <div className="flex justify-between text-lg font-semibold">
-                  <span>Total</span>
-                  <span className="text-accent">${total.toFixed(2)}</span>
+                <div className={`flex justify-between text-lg font-semibold ${isRTL ? 'flex-row-reverse' : ''}`}>
+                  <span>{translate(language, 'cart.total')}</span>
+                  <span className="text-accent">{total.toLocaleString()} ج.م</span>
                 </div>
 
                 {shipping > 0 && (
                   <p className="text-sm text-muted-foreground">
-                    Add ${(150 - subtotal).toFixed(2)} more for free shipping
+                    {translate(language, 'cart.free-shipping-msg')}
                   </p>
                 )}
 
@@ -220,14 +209,14 @@ export default function CartPage() {
                   href="/checkout"
                   className="block w-full py-4 bg-accent text-accent-foreground font-semibold text-center rounded-xl hover:bg-accent/90 transition-all hover:shadow-[0_0_20px_rgba(245,230,66,0.3)]"
                 >
-                  Proceed to Checkout
+                  {translate(language, 'cart.checkout')}
                 </Link>
 
                 <Link
                   href="/shop"
                   className="block w-full py-4 bg-secondary text-secondary-foreground font-semibold text-center rounded-xl hover:bg-secondary/80 transition-colors"
                 >
-                  Continue Shopping
+                  {translate(language, 'cart.continue-shopping')}
                 </Link>
               </div>
             </div>
@@ -238,7 +227,7 @@ export default function CartPage() {
         {items.length > 0 && (
           <section className="mt-24">
             <h2 className="text-2xl md:text-3xl font-display tracking-wider mb-8">
-              CUSTOMERS ALSO BOUGHT
+              {translate(language, 'cart.suggested')}
             </h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
               {suggestedProducts.map((product, i) => (

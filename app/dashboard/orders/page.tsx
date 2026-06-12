@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { useLanguageStore } from '@/lib/language-store'
+import { useLanguageStore, t as translate } from '@/lib/language-store'
 import {
   Search,
   Eye,
@@ -27,7 +27,7 @@ const mockOrders = [
 ]
 
 export default function OrdersPage() {
-  const { t, language } = useLanguageStore()
+  const { language } = useLanguageStore()
   const isRTL = language === 'ar'
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedStatus, setSelectedStatus] = useState<string>('all')
@@ -71,19 +71,76 @@ export default function OrdersPage() {
 
   const getStatusText = (status: string) => {
     const statusKey = `dashboard.${status}` as const
-    return t(statusKey)
+    return translate(language, statusKey)
+  }
+
+  const handleExportOrders = async () => {
+    const html2canvas = (await import('html2canvas')).default
+    const jsPDF = (await import('jspdf')).default
+    
+    const element = document.querySelector('table') as HTMLElement
+    if (!element) {
+      console.error('Orders table not found')
+      return
+    }
+
+    const style = document.createElement('style')
+    style.textContent = `
+      * {
+        color: #ffffff !important;
+        background-color: #0a0a0a !important;
+        border-color: #333333 !important;
+      }
+    `
+    document.head.appendChild(style)
+
+    try {
+      const canvas = await html2canvas(element, {
+        backgroundColor: '#0a0a0a',
+        scale: 2,
+        logging: true,
+        useCORS: true,
+        allowTaint: true,
+      })
+
+      const imgData = canvas.toDataURL('image/png')
+      const pdf = new jsPDF('p', 'mm', 'a4')
+      
+      const imgWidth = 210
+      const pageHeight = 297
+      const imgHeight = (canvas.height * imgWidth) / canvas.width
+      let heightLeft = imgHeight
+      let position = 0
+
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
+      heightLeft -= pageHeight
+
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight
+        pdf.addPage()
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
+        heightLeft -= pageHeight
+      }
+
+      pdf.save(`orders_export_${new Date().toISOString().split('T')[0]}.pdf`)
+    } catch (error) {
+      console.error('Export failed:', error)
+    } finally {
+      document.head.removeChild(style)
+    }
   }
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className={`flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between ${isRTL ? 'sm:flex-row-reverse' : ''}`}>
-        <h2 className="text-2xl font-bold">{t('dashboard.orders')}</h2>
+        <h2 className="text-2xl font-bold">{translate(language, 'dashboard.orders')}</h2>
         <button
-          className={`flex items-center gap-2 px-4 py-2 bg-secondary border border-border rounded-lg hover:bg-secondary/80 transition-colors ${isRTL ? 'flex-row-reverse' : ''}`}
+          onClick={handleExportOrders}
+          className={`flex items-center gap-2 px-4 py-2 bg-secondary border border-border rounded-lg hover:bg-secondary/80 transition-colors ${isRTL ? 'flex-row-reverse' : ''} cursor-pointer`}
         >
           <Download className="w-5 h-5" />
-          {t('dashboard.export')}
+          {translate(language, 'dashboard.export')}
         </button>
       </div>
 
@@ -93,7 +150,7 @@ export default function OrdersPage() {
           <Search className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground ${isRTL ? 'right-3' : 'left-3'}`} />
           <input
             type="text"
-            placeholder={t('dashboard.search-orders')}
+            placeholder={translate(language, 'dashboard.search-orders')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className={`w-full bg-secondary border border-border rounded-lg py-2 focus:outline-none focus:ring-2 focus:ring-accent ${isRTL ? 'pr-10 pl-4 text-right' : 'pl-10 pr-4'}`}
@@ -125,22 +182,22 @@ export default function OrdersPage() {
                   {language === 'ar' ? 'رقم الطلب' : 'Order ID'}
                 </th>
                 <th className={`px-4 py-3 text-sm font-medium text-muted-foreground ${isRTL ? 'text-right' : 'text-left'}`}>
-                  {t('dashboard.customer')}
+                  {translate(language, 'dashboard.customer')}
                 </th>
                 <th className={`px-4 py-3 text-sm font-medium text-muted-foreground ${isRTL ? 'text-right' : 'text-left'}`}>
                   {language === 'ar' ? 'المنتجات' : 'Items'}
                 </th>
                 <th className={`px-4 py-3 text-sm font-medium text-muted-foreground ${isRTL ? 'text-right' : 'text-left'}`}>
-                  {t('dashboard.amount')}
+                  {translate(language, 'dashboard.amount')}
                 </th>
                 <th className={`px-4 py-3 text-sm font-medium text-muted-foreground ${isRTL ? 'text-right' : 'text-left'}`}>
-                  {t('dashboard.status')}
+                  {translate(language, 'dashboard.status')}
                 </th>
                 <th className={`px-4 py-3 text-sm font-medium text-muted-foreground ${isRTL ? 'text-right' : 'text-left'}`}>
-                  {t('dashboard.date')}
+                  {translate(language, 'dashboard.date')}
                 </th>
                 <th className={`px-4 py-3 text-sm font-medium text-muted-foreground ${isRTL ? 'text-left' : 'text-right'}`}>
-                  {t('dashboard.action')}
+                  {translate(language, 'dashboard.action')}
                 </th>
               </tr>
             </thead>
@@ -173,8 +230,8 @@ export default function OrdersPage() {
                   <td className={`px-4 py-3 ${isRTL ? 'text-left' : 'text-right'}`}>
                     <button
                       onClick={() => setSelectedOrder(order)}
-                      className="p-2 hover:bg-secondary rounded-lg transition-colors"
-                      title={t('dashboard.view')}
+                      className="p-2 hover:bg-secondary rounded-lg transition-colors cursor-pointer"
+                      title={translate(language, 'dashboard.view')}
                     >
                       <Eye className="w-4 h-4" />
                     </button>
@@ -196,7 +253,7 @@ export default function OrdersPage() {
             <button
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               disabled={currentPage === 1}
-              className="p-2 rounded-lg hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed"
+              className="p-2 rounded-lg hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
               <ChevronLeft className={`w-5 h-5 ${isRTL ? 'rotate-180' : ''}`} />
             </button>
@@ -206,7 +263,7 @@ export default function OrdersPage() {
             <button
               onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages || totalPages === 0}
-              className="p-2 rounded-lg hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed"
+              className="p-2 rounded-lg hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
               <ChevronRight className={`w-5 h-5 ${isRTL ? 'rotate-180' : ''}`} />
             </button>
@@ -239,7 +296,7 @@ export default function OrdersPage() {
 
             <div className="space-y-4">
               <div className={`p-4 bg-secondary/50 rounded-lg ${isRTL ? 'text-right' : ''}`}>
-                <p className="text-sm text-muted-foreground">{t('dashboard.customer')}</p>
+                <p className="text-sm text-muted-foreground">{translate(language, 'dashboard.customer')}</p>
                 <p className="font-medium">{selectedOrder.customer}</p>
                 <p className="text-sm text-muted-foreground">{selectedOrder.email}</p>
               </div>
@@ -255,22 +312,22 @@ export default function OrdersPage() {
                   <p className="font-medium">{selectedOrder.items}</p>
                 </div>
                 <div className={`p-4 bg-secondary/50 rounded-lg ${isRTL ? 'text-right' : ''}`}>
-                  <p className="text-sm text-muted-foreground">{t('dashboard.amount')}</p>
+                  <p className="text-sm text-muted-foreground">{translate(language, 'dashboard.amount')}</p>
                   <p className="font-medium text-accent">${selectedOrder.amount}</p>
                 </div>
               </div>
 
               <div className={`p-4 bg-secondary/50 rounded-lg ${isRTL ? 'text-right' : ''}`}>
-                <p className="text-sm text-muted-foreground">{t('dashboard.date')}</p>
+                <p className="text-sm text-muted-foreground">{translate(language, 'dashboard.date')}</p>
                 <p className="font-medium">{selectedOrder.date}</p>
               </div>
             </div>
 
             <button
               onClick={() => setSelectedOrder(null)}
-              className="w-full mt-6 px-4 py-2 bg-accent text-accent-foreground rounded-lg hover:bg-accent/90 transition-colors"
+              className="w-full mt-6 px-4 py-2 bg-accent text-accent-foreground rounded-lg hover:bg-accent/90 transition-colors cursor-pointer"
             >
-              {t('common.close')}
+              {translate(language, 'common.close')}
             </button>
           </motion.div>
         </motion.div>

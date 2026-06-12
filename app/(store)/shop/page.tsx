@@ -1,27 +1,74 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { SlidersHorizontal, X, ChevronDown, Grid3X3, LayoutGrid } from 'lucide-react'
 import { products, brands, categories, genders, sizes } from '@/lib/products'
 import { ProductCard } from '@/components/product-card'
-import { useLanguageStore } from '@/lib/language-store'
+import { useLanguageStore, t as translate } from '@/lib/language-store'
 
 type SortOption = 'newest' | 'price-low' | 'price-high' | 'popular' | 'rating'
 
+const FilterSection = ({
+  title,
+  children,
+  isRTL,
+}: {
+  title: string
+  children: React.ReactNode
+  isRTL: boolean
+}) => {
+  const [open, setOpen] = useState(true)
+  return (
+    <div className="border-b border-border pb-4">
+      <button
+        onClick={() => setOpen(!open)}
+        className={`flex items-center justify-between w-full py-2 text-start ${isRTL ? 'flex-row-reverse' : ''}`}
+      >
+        <span className="font-semibold text-sm">{title}</span>
+        <ChevronDown className={`w-4 h-4 transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="overflow-hidden"
+          >
+            <div className="pt-2">{children}</div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  )
+}
+
 export default function ShopPage() {
-  const { t } = useLanguageStore()
+  const searchParams = useSearchParams()
+  const urlFilter = searchParams.get('filter')
+  const { language } = useLanguageStore()
+  const isRTL = language === 'ar'
   const [filtersOpen, setFiltersOpen] = useState(false)
   const [selectedBrands, setSelectedBrands] = useState<string[]>([])
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [selectedGenders, setSelectedGenders] = useState<string[]>([])
   const [selectedSizes, setSelectedSizes] = useState<string[]>([])
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 300])
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 15000])
   const [sortBy, setSortBy] = useState<SortOption>('newest')
   const [gridCols, setGridCols] = useState<3 | 4>(4)
 
   const filteredProducts = useMemo(() => {
     let result = [...products]
+
+    if (urlFilter === 'new') {
+      result = result.filter((p) => p.isNew)
+    } else if (urlFilter === 'sale') {
+      result = result.filter((p) => p.salePrice)
+    } else if (urlFilter === 'bestseller') {
+      result = result.filter((p) => p.tags.includes('trending') || p.reviewCount >= 100)
+    }
 
     // Filter by brand
     if (selectedBrands.length > 0) {
@@ -71,7 +118,7 @@ export default function ShopPage() {
     }
 
     return result
-  }, [selectedBrands, selectedCategories, selectedGenders, selectedSizes, priceRange, sortBy])
+  }, [urlFilter, selectedBrands, selectedCategories, selectedGenders, selectedSizes, priceRange, sortBy])
 
   const toggleFilter = (
     value: string,
@@ -90,7 +137,7 @@ export default function ShopPage() {
     setSelectedCategories([])
     setSelectedGenders([])
     setSelectedSizes([])
-    setPriceRange([0, 300])
+    setPriceRange([0, 15000])
   }
 
   const hasActiveFilters =
@@ -99,77 +146,46 @@ export default function ShopPage() {
     selectedGenders.length > 0 ||
     selectedSizes.length > 0 ||
     priceRange[0] > 0 ||
-    priceRange[1] < 300
-
-  const FilterSection = ({ title, children }: { title: string; children: React.ReactNode }) => {
-    const [open, setOpen] = useState(true)
-    return (
-      <div className="border-b border-border pb-4">
-        <button
-          onClick={() => setOpen(!open)}
-          className="flex items-center justify-between w-full py-2 text-left"
-        >
-          <span className="font-semibold text-sm">{title}</span>
-          <ChevronDown className={`w-4 h-4 transition-transform ${open ? 'rotate-180' : ''}`} />
-        </button>
-        <AnimatePresence>
-          {open && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              className="overflow-hidden"
-            >
-              <div className="pt-2">{children}</div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-    )
-  }
+    priceRange[1] < 15000
 
   return (
     <div className="min-h-screen pt-24">
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="mb-8">
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-4xl md:text-5xl font-display tracking-wider"
-          >
-            {t('shop.all-sneakers')}
-          </motion.h1>
+          <h1 className="text-4xl md:text-5xl font-display tracking-wider">
+            {translate(language, 'shop.title')}
+          </h1>
           <p className="text-muted-foreground mt-2">
-            {filteredProducts.length} {t('shop.products-count')}
+            {filteredProducts.length} {translate(language, 'shop.products-count')}
           </p>
         </div>
 
         {/* Controls */}
-        <div className="flex items-center justify-between mb-8 pb-4 border-b border-border">
+        <div className={`flex items-center justify-between mb-8 pb-4 border-b border-border ${isRTL ? 'flex-row-reverse' : ''}`}>
           <button
             onClick={() => setFiltersOpen(!filtersOpen)}
-            className="flex items-center gap-2 px-4 py-2 bg-secondary rounded-lg hover:bg-secondary/80 transition-colors md:hidden"
+            className={`flex items-center gap-2 px-4 py-2 bg-secondary rounded-lg hover:bg-secondary/80 transition-colors md:hidden ${isRTL ? 'flex-row-reverse' : ''}`}
           >
             <SlidersHorizontal className="w-4 h-4" />
-            {t('shop.filters')}
+            {translate(language, 'shop.filters')}
             {hasActiveFilters && (
               <span className="w-2 h-2 bg-accent rounded-full" />
             )}
           </button>
 
-          <div className="hidden md:flex items-center gap-4">
+          <div className={`hidden md:flex items-center gap-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
             {hasActiveFilters && (
               <button
                 onClick={clearAllFilters}
                 className="text-sm text-accent hover:underline"
               >
-                {t('shop.clear-all')}
+                {translate(language, 'shop.clear-all')}
               </button>
             )}
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className={`flex items-center gap-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
             <div className="hidden md:flex items-center gap-2">
               <button
                 onClick={() => setGridCols(3)}
@@ -190,23 +206,23 @@ export default function ShopPage() {
               onChange={(e) => setSortBy(e.target.value as SortOption)}
               className="px-4 py-2 bg-secondary border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent"
             >
-              <option value="newest">{t('shop.sort.newest')}</option>
-              <option value="popular">{t('shop.sort.popular')}</option>
-              <option value="rating">{t('shop.sort.rating')}</option>
-              <option value="price-low">{t('shop.sort.price-low')}</option>
-              <option value="price-high">{t('shop.sort.price-high')}</option>
+              <option value="newest">{translate(language, 'shop.sort.newest')}</option>
+              <option value="popular">{translate(language, 'shop.sort.popular')}</option>
+              <option value="rating">{translate(language, 'shop.sort.rating')}</option>
+              <option value="price-low">{translate(language, 'shop.sort.price-low')}</option>
+              <option value="price-high">{translate(language, 'shop.sort.price-high')}</option>
             </select>
           </div>
         </div>
 
-        <div className="flex gap-8">
+        <div className={`flex gap-8 ${isRTL ? 'flex-row-reverse' : ''}`}>
           {/* Desktop Sidebar Filters */}
           <aside className="hidden md:block w-64 flex-shrink-0">
             <div className="sticky top-24 space-y-4">
-              <FilterSection title={t('shop.brand')}>
+              <FilterSection title={translate(language, 'shop.brand')} isRTL={isRTL}>
                 <div className="space-y-2">
                   {brands.map(brand => (
-                    <label key={brand} className="flex items-center gap-2 cursor-pointer">
+                    <label key={brand} className={`flex items-center gap-2 cursor-pointer ${isRTL ? 'flex-row-reverse' : ''}`}>
                       <input
                         type="checkbox"
                         checked={selectedBrands.includes(brand)}
@@ -219,10 +235,10 @@ export default function ShopPage() {
                 </div>
               </FilterSection>
 
-              <FilterSection title={t('shop.category')}>
+              <FilterSection title={translate(language, 'shop.category')} isRTL={isRTL}>
                 <div className="space-y-2">
                   {categories.map(cat => (
-                    <label key={cat} className="flex items-center gap-2 cursor-pointer">
+                    <label key={cat} className={`flex items-center gap-2 cursor-pointer ${isRTL ? 'flex-row-reverse' : ''}`}>
                       <input
                         type="checkbox"
                         checked={selectedCategories.includes(cat)}
@@ -235,10 +251,10 @@ export default function ShopPage() {
                 </div>
               </FilterSection>
 
-              <FilterSection title={t('shop.gender')}>
+              <FilterSection title={translate(language, 'shop.gender')} isRTL={isRTL}>
                 <div className="space-y-2">
                   {genders.map(gender => (
-                    <label key={gender} className="flex items-center gap-2 cursor-pointer">
+                    <label key={gender} className={`flex items-center gap-2 cursor-pointer ${isRTL ? 'flex-row-reverse' : ''}`}>
                       <input
                         type="checkbox"
                         checked={selectedGenders.includes(gender)}
@@ -251,7 +267,7 @@ export default function ShopPage() {
                 </div>
               </FilterSection>
 
-              <FilterSection title={t('shop.size')}>
+              <FilterSection title={translate(language, 'shop.size')} isRTL={isRTL}>
                 <div className="flex flex-wrap gap-2">
                   {sizes.map(size => (
                     <button
@@ -268,34 +284,60 @@ export default function ShopPage() {
                 </div>
               </FilterSection>
 
-              <FilterSection title={t('shop.price')}>
+              <FilterSection title={translate(language, 'shop.price')} isRTL={isRTL}>
                 <div className="space-y-4">
                   <div className="flex items-center gap-4">
-                    <input
-                      type="number"
-                      value={priceRange[0]}
-                      onChange={(e) => setPriceRange([Number(e.target.value), priceRange[1]])}
-                      className="w-20 px-3 py-2 bg-input border border-border rounded text-sm"
-                      min={0}
-                      max={priceRange[1]}
-                    />
-                    <span className="text-muted-foreground">{t('shop.to')}</span>
-                    <input
-                      type="number"
-                      value={priceRange[1]}
-                      onChange={(e) => setPriceRange([priceRange[0], Number(e.target.value)])}
-                      className="w-20 px-3 py-2 bg-input border border-border rounded text-sm"
-                      min={priceRange[0]}
-                      max={500}
-                    />
+                    {isRTL ? (
+                      <>
+                        <input
+                          type="number"
+                          value={priceRange[0]}
+                          onChange={(e) => setPriceRange([Number(e.target.value), priceRange[1]])}
+                          className="w-20 px-3 py-2 bg-input border border-border rounded text-sm"
+                          min={0}
+                          max={priceRange[1]}
+                        />
+                        <span className="text-muted-foreground">{translate(language, 'shop.to')}</span>
+                        <input
+                          type="number"
+                          value={priceRange[1]}
+                          onChange={(e) => setPriceRange([priceRange[0], Number(e.target.value)])}
+                          className="w-20 px-3 py-2 bg-input border border-border rounded text-sm"
+                          min={priceRange[0]}
+                          max={15000}
+                        />
+                      </>
+                    ) : (
+                      <>
+                        <input
+                          type="number"
+                          value={priceRange[0]}
+                          onChange={(e) => setPriceRange([Number(e.target.value), priceRange[1]])}
+                          className="w-20 px-3 py-2 bg-input border border-border rounded text-sm"
+                          min={0}
+                          max={priceRange[1]}
+                        />
+                        <span className="text-muted-foreground">{translate(language, 'shop.to')}</span>
+                        <input
+                          type="number"
+                          value={priceRange[1]}
+                          onChange={(e) => setPriceRange([priceRange[0], Number(e.target.value)])}
+                          className="w-20 px-3 py-2 bg-input border border-border rounded text-sm"
+                          min={priceRange[0]}
+                          max={15000}
+                        />
+                      </>
+                    )}
                   </div>
                   <input
                     type="range"
                     min={0}
-                    max={300}
+                    max={15000}
                     value={priceRange[1]}
                     onChange={(e) => setPriceRange([priceRange[0], Number(e.target.value)])}
                     className="w-full accent-accent"
+                    style={{ direction: 'ltr' }}
+                    dir="ltr"
                   />
                 </div>
               </FilterSection>
@@ -314,15 +356,15 @@ export default function ShopPage() {
                   className="fixed inset-0 bg-black/60 z-40 md:hidden"
                 />
                 <motion.div
-                  initial={{ x: '-100%' }}
+                  initial={{ x: isRTL ? '100%' : '-100%' }}
                   animate={{ x: 0 }}
-                  exit={{ x: '-100%' }}
+                  exit={{ x: isRTL ? '100%' : '-100%' }}
                   transition={{ type: 'tween' }}
-                  className="fixed left-0 top-0 bottom-0 w-80 bg-background z-50 overflow-y-auto md:hidden"
+                  className={`fixed ${isRTL ? 'right-0' : 'left-0'} top-0 bottom-0 w-80 bg-background z-50 overflow-y-auto md:hidden`}
                 >
                   <div className="p-6 space-y-4">
-                    <div className="flex items-center justify-between mb-4">
-                      <h2 className="text-lg font-semibold">{t('shop.filters')}</h2>
+                    <div className={`flex items-center justify-between mb-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                      <h2 className="text-lg font-semibold">{translate(language, 'shop.filters')}</h2>
                       <button onClick={() => setFiltersOpen(false)}>
                         <X className="w-5 h-5" />
                       </button>
@@ -333,14 +375,14 @@ export default function ShopPage() {
                         onClick={clearAllFilters}
                         className="text-sm text-accent hover:underline"
                       >
-                        {t('shop.clear-all')}
+                        {translate(language, 'shop.clear-all')}
                       </button>
                     )}
 
-                    <FilterSection title={t('shop.brand')}>
+                    <FilterSection title={translate(language, 'shop.brand')} isRTL={isRTL}>
                       <div className="space-y-2">
                         {brands.map(brand => (
-                          <label key={brand} className="flex items-center gap-2 cursor-pointer">
+                          <label key={brand} className={`flex items-center gap-2 cursor-pointer ${isRTL ? 'flex-row-reverse' : ''}`}>
                             <input
                               type="checkbox"
                               checked={selectedBrands.includes(brand)}
@@ -353,10 +395,10 @@ export default function ShopPage() {
                       </div>
                     </FilterSection>
 
-                    <FilterSection title={t('shop.category')}>
+                    <FilterSection title={translate(language, 'shop.category')} isRTL={isRTL}>
                       <div className="space-y-2">
                         {categories.map(cat => (
-                          <label key={cat} className="flex items-center gap-2 cursor-pointer">
+                          <label key={cat} className={`flex items-center gap-2 cursor-pointer ${isRTL ? 'flex-row-reverse' : ''}`}>
                             <input
                               type="checkbox"
                               checked={selectedCategories.includes(cat)}
@@ -369,7 +411,7 @@ export default function ShopPage() {
                       </div>
                     </FilterSection>
 
-                    <FilterSection title={t('shop.size')}>
+                    <FilterSection title={translate(language, 'shop.size')} isRTL={isRTL}>
                       <div className="flex flex-wrap gap-2">
                         {sizes.map(size => (
                           <button
@@ -395,12 +437,12 @@ export default function ShopPage() {
           <div className="flex-1">
             {filteredProducts.length === 0 ? (
               <div className="text-center py-20">
-                <p className="text-muted-foreground text-lg">{t('shop.no-products')}</p>
+                <p className="text-muted-foreground text-lg">{translate(language, 'shop.no-products')}</p>
                 <button
                   onClick={clearAllFilters}
                   className="mt-4 text-accent hover:underline"
                 >
-                  {t('shop.clear-all')}
+                  {translate(language, 'shop.clear-all')}
                 </button>
               </div>
             ) : (

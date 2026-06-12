@@ -1,18 +1,24 @@
 "use client"
 
 import { useLanguageStore } from "@/lib/language-store"
+import { useCartStore, useWishlistStore } from "@/lib/store"
+import { ToastProvider } from "@/components/toast"
 import { useEffect, ReactNode } from "react"
 
-export function LanguageWrapper({ children }: { children: ReactNode }) {
+export function Providers({ children }: { children: ReactNode }) {
   const { language } = useLanguageStore()
 
   useEffect(() => {
-    // Update html attributes for RTL and lang
+    useLanguageStore.persist.rehydrate()
+    useCartStore.persist.rehydrate()
+    useWishlistStore.persist.rehydrate()
+  }, [])
+
+  useEffect(() => {
     const html = document.documentElement
     html.setAttribute("lang", language)
     html.setAttribute("dir", language === "ar" ? "rtl" : "ltr")
-    
-    // Update font class
+
     if (language === "ar") {
       html.classList.add("font-arabic")
       html.classList.remove("font-sans")
@@ -25,6 +31,7 @@ export function LanguageWrapper({ children }: { children: ReactNode }) {
   return (
     <div className={language === "ar" ? "font-arabic" : "font-sans"}>
       {children}
+      <ToastProvider />
     </div>
   )
 }

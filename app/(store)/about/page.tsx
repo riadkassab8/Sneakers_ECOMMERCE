@@ -4,45 +4,48 @@ import { motion } from 'framer-motion'
 import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowRight, Award, Globe, Users, Leaf } from 'lucide-react'
+import { useLanguageStore, t as translate } from '@/lib/language-store'
 
 export default function AboutPage() {
+  const { language } = useLanguageStore()
+  const isRTL = language === 'ar'
   const stats = [
-    { value: '50K+', label: 'Happy Customers' },
-    { value: '100+', label: 'Brand Partners' },
-    { value: '500K+', label: 'Sneakers Sold' },
-    { value: '99%', label: 'Authenticity Rate' },
+    { value: '50K+', label: translate(language, 'about.stats.customers') },
+    { value: '100+', label: translate(language, 'about.stats.partners') },
+    { value: '500K+', label: translate(language, 'about.stats.sold') },
+    { value: '99%', label: translate(language, 'about.stats.authenticity') },
   ]
 
   const values = [
     {
       icon: Award,
-      title: '100% Authentic',
-      description: 'Every sneaker is verified by our team of experts before it reaches you.',
+      title: translate(language, 'about.values.authentic.title'),
+      description: translate(language, 'about.values.authentic.description'),
     },
     {
       icon: Globe,
-      title: 'Global Reach',
-      description: 'We ship to over 100 countries, bringing the best kicks worldwide.',
+      title: translate(language, 'about.values.global.title'),
+      description: translate(language, 'about.values.global.description'),
     },
     {
       icon: Users,
-      title: 'Community First',
-      description: 'Built by sneakerheads, for sneakerheads. We get it.',
+      title: translate(language, 'about.values.community.title'),
+      description: translate(language, 'about.values.community.description'),
     },
     {
       icon: Leaf,
-      title: 'Sustainable',
-      description: 'Eco-friendly packaging and carbon-neutral shipping options.',
+      title: translate(language, 'about.values.sustainable.title'),
+      description: translate(language, 'about.values.sustainable.description'),
     },
   ]
 
   const timeline = [
-    { year: '2019', title: 'The Beginning', description: 'Started as a passion project by two sneaker enthusiasts.' },
-    { year: '2020', title: 'Going Digital', description: 'Launched our online platform during the pandemic.' },
-    { year: '2021', title: 'Rapid Growth', description: 'Expanded to 50+ countries and 100K customers.' },
-    { year: '2022', title: 'Authentication Lab', description: 'Opened our state-of-the-art authentication facility.' },
-    { year: '2023', title: 'Global Presence', description: 'Became a trusted name in the sneaker community worldwide.' },
-    { year: '2024', title: 'The Future', description: 'Continuing to innovate and serve sneaker culture.' },
+    { year: '2019', title: translate(language, 'about.timeline.2019.title'), description: translate(language, 'about.timeline.2019.description') },
+    { year: '2020', title: translate(language, 'about.timeline.2020.title'), description: translate(language, 'about.timeline.2020.description') },
+    { year: '2021', title: translate(language, 'about.timeline.2021.title'), description: translate(language, 'about.timeline.2021.description') },
+    { year: '2022', title: translate(language, 'about.timeline.2022.title'), description: translate(language, 'about.timeline.2022.description') },
+    { year: '2023', title: translate(language, 'about.timeline.2023.title'), description: translate(language, 'about.timeline.2023.description') },
+    { year: '2024', title: translate(language, 'about.timeline.2024.title'), description: translate(language, 'about.timeline.2024.description') },
   ]
 
   return (
@@ -64,12 +67,12 @@ export default function AboutPage() {
             animate={{ opacity: 1, y: 0 }}
             className="max-w-3xl mx-auto text-center"
           >
-            <span className="text-accent text-sm tracking-widest">OUR STORY</span>
+            <span className="text-accent text-sm tracking-widest">{translate(language, 'about.story')}</span>
             <h1 className="text-5xl md:text-7xl font-display tracking-wider mt-4">
-              BORN FROM PASSION
+              {translate(language, 'about.title')}
             </h1>
             <p className="text-muted-foreground mt-6 text-lg leading-relaxed">
-              SNKRVAULT was founded with a simple mission: to bring the world&apos;s most coveted sneakers to collectors and enthusiasts everywhere. We believe every pair tells a story.
+              {translate(language, 'about.description')}
             </p>
           </motion.div>
         </div>
@@ -105,9 +108,9 @@ export default function AboutPage() {
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <h2 className="text-4xl md:text-5xl font-display tracking-wider">OUR VALUES</h2>
+            <h2 className="text-4xl md:text-5xl font-display tracking-wider">{translate(language, 'about.values.title')}</h2>
             <p className="text-muted-foreground mt-4 max-w-2xl mx-auto">
-              What drives us every day to deliver the best sneaker experience.
+              {translate(language, 'about.values.description')}
             </p>
           </motion.div>
 
@@ -141,18 +144,18 @@ export default function AboutPage() {
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <h2 className="text-4xl md:text-5xl font-display tracking-wider">OUR JOURNEY</h2>
+            <h2 className="text-4xl md:text-5xl font-display tracking-wider">{translate(language, 'about.journey')}</h2>
           </motion.div>
 
           <div className="max-w-3xl mx-auto">
             {timeline.map((item, i) => (
               <motion.div
                 key={item.year}
-                initial={{ opacity: 0, x: i % 2 === 0 ? -40 : 40 }}
+                initial={{ opacity: 0, x: isRTL ? (i % 2 === 0 ? 40 : -40) : (i % 2 === 0 ? -40 : 40) }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
-                className="flex gap-6 mb-8"
+                className={`flex gap-6 mb-8 ${isRTL ? 'flex-row-reverse' : ''}`}
               >
                 <div className="flex flex-col items-center">
                   <div className="w-12 h-12 bg-accent rounded-full flex items-center justify-center text-accent-foreground font-bold text-sm">
@@ -182,17 +185,17 @@ export default function AboutPage() {
             viewport={{ once: true }}
           >
             <h2 className="text-4xl md:text-5xl font-display tracking-wider">
-              JOIN THE VAULT
+              {translate(language, 'about.cta.title')}
             </h2>
             <p className="text-muted-foreground mt-4 max-w-xl mx-auto">
-              Be part of a community that shares your passion for sneakers.
+              {translate(language, 'about.cta.description')}
             </p>
             <Link
               href="/shop"
-              className="inline-flex items-center gap-3 px-8 py-4 bg-accent text-accent-foreground font-semibold rounded-full mt-8 hover:bg-accent/90 transition-all hover:scale-105"
+              className={`inline-flex items-center gap-3 px-8 py-4 bg-accent text-accent-foreground font-semibold rounded-full mt-8 hover:bg-accent/90 transition-all hover:scale-105 ${isRTL ? 'flex-row-reverse' : ''}`}
             >
-              Shop Now
-              <ArrowRight className="w-5 h-5" />
+              {translate(language, 'about.cta.button')}
+              {isRTL ? <ArrowRight className="w-5 h-5 rotate-180" /> : <ArrowRight className="w-5 h-5" />}
             </Link>
           </motion.div>
         </div>

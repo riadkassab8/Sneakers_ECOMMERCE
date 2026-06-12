@@ -2,12 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Inter, Bebas_Neue, Almarai } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
-import { Header } from '@/components/header'
-import { Footer } from '@/components/footer'
-import { CartSidebar } from '@/components/cart-sidebar'
-import { SearchOverlay } from '@/components/search-overlay'
-import { ToastProvider } from '@/components/toast'
-import { LanguageWrapper } from '@/components/language-wrapper'
+import { Providers } from '@/components/providers'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -43,16 +38,9 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${bebasNeue.variable} ${almarai.variable} bg-background`}>
+    <html lang="en" dir="ltr" suppressHydrationWarning className={`${inter.variable} ${bebasNeue.variable} ${almarai.variable} bg-background`}>
       <body className="font-sans antialiased bg-background text-foreground min-h-screen">
-        <LanguageWrapper>
-          <Header />
-          <main>{children}</main>
-          <Footer />
-          <CartSidebar />
-          <SearchOverlay />
-          <ToastProvider />
-        </LanguageWrapper>
+        <Providers>{children}</Providers>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>

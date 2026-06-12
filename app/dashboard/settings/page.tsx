@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { useLanguageStore } from '@/lib/language-store'
+import { useLanguageStore, t as translate } from '@/lib/language-store'
 import {
   Store,
   Bell,
@@ -15,7 +15,7 @@ import {
 } from 'lucide-react'
 
 export default function SettingsPage() {
-  const { t, language } = useLanguageStore()
+  const { language } = useLanguageStore()
   const isRTL = language === 'ar'
   const [activeTab, setActiveTab] = useState('store')
   const [saved, setSaved] = useState(false)
@@ -297,7 +297,7 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <h2 className={`text-2xl font-bold ${isRTL ? 'text-right' : ''}`}>{t('dashboard.settings')}</h2>
+      <h2 className={`text-2xl font-bold ${isRTL ? 'text-right' : ''}`}>{translate(language, 'dashboard.settings')}</h2>
 
       <div className={`flex flex-col lg:flex-row gap-6 ${isRTL ? 'lg:flex-row-reverse' : ''}`}>
         {/* Sidebar */}
@@ -311,7 +311,7 @@ export default function SettingsPage() {
                   activeTab === tab.id
                     ? 'bg-accent text-accent-foreground'
                     : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
-                } ${isRTL ? 'flex-row-reverse' : ''}`}
+                } ${isRTL ? 'flex-row-reverse' : ''} cursor-pointer`}
               >
                 <tab.icon className="w-5 h-5" />
                 <span className="text-sm font-medium">{tab.label}</span>
@@ -335,7 +335,7 @@ export default function SettingsPage() {
             <div className={`flex mt-6 pt-6 border-t border-border ${isRTL ? 'justify-start' : 'justify-end'}`}>
               <button
                 onClick={handleSave}
-                className={`flex items-center gap-2 px-6 py-2 bg-accent text-accent-foreground rounded-lg hover:bg-accent/90 transition-colors ${isRTL ? 'flex-row-reverse' : ''}`}
+                className={`flex items-center gap-2 px-6 py-2 bg-accent text-accent-foreground rounded-lg hover:bg-accent/90 transition-colors ${isRTL ? 'flex-row-reverse' : ''} cursor-pointer`}
               >
                 {saved ? (
                   <>
@@ -345,7 +345,7 @@ export default function SettingsPage() {
                 ) : (
                   <>
                     <Save className="w-5 h-5" />
-                    {t('dashboard.save')}
+                    {translate(language, 'dashboard.save')}
                   </>
                 )}
               </button>

@@ -10,9 +10,12 @@ import { products } from '@/lib/products'
 import { useCartStore, useWishlistStore, useUIStore } from '@/lib/store'
 import { ProductCard } from '@/components/product-card'
 import { useToastStore } from '@/components/toast'
+import { useLanguageStore, t as translate } from '@/lib/language-store'
 
 export default function ProductPage() {
   const params = useParams()
+  const { language } = useLanguageStore()
+  const isRTL = language === 'ar'
   const product = products.find(p => p.id === params.id)
   
   if (!product) {
@@ -36,21 +39,21 @@ export default function ProductPage() {
 
   const handleAddToCart = () => {
     if (!selectedSize) {
-      addToast({ type: 'error', message: 'Please select a size' })
+      addToast({ type: 'error', message: translate(language, 'product.select-size-error') })
       return
     }
     addItem(product, selectedSize, quantity)
-    addToast({ 
-      type: 'success', 
-      message: 'Added to cart', 
-      description: `${product.name} - Size ${selectedSize}`
+    addToast({
+      type: 'success',
+      message: translate(language, 'product.added-to-cart'),
+      description: `${product.name} - ${translate(language, 'product.size')} ${selectedSize}`
     })
     setCartOpen(true)
   }
 
   const handleBuyNow = () => {
     if (!selectedSize) {
-      addToast({ type: 'error', message: 'Please select a size' })
+      addToast({ type: 'error', message: translate(language, 'product.select-size-error') })
       return
     }
     addItem(product, selectedSize, quantity)
@@ -61,7 +64,7 @@ export default function ProductPage() {
     <div className="border-b border-border">
       <button
         onClick={() => setActiveAccordion(activeAccordion === id ? null : id)}
-        className="flex items-center justify-between w-full py-4 text-left"
+        className={`flex items-center justify-between w-full py-4 text-start ${isRTL ? 'flex-row-reverse' : ''}`}
       >
         <span className="font-semibold">{title}</span>
         <ChevronDown className={`w-4 h-4 transition-transform ${activeAccordion === id ? 'rotate-180' : ''}`} />
@@ -85,16 +88,16 @@ export default function ProductPage() {
     <div className="min-h-screen pt-24 pb-20">
       <div className="container mx-auto px-4">
         {/* Breadcrumb */}
-        <nav className="mb-8 text-sm text-muted-foreground">
-          <Link href="/" className="hover:text-foreground">Home</Link>
+        <nav className={`mb-8 text-sm text-muted-foreground flex items-center ${isRTL ? 'flex-row-reverse' : ''}`}>
+          <Link href="/" className="hover:text-foreground">{translate(language, 'nav.home')}</Link>
           <span className="mx-2">/</span>
-          <Link href="/shop" className="hover:text-foreground">Shop</Link>
+          <Link href="/shop" className="hover:text-foreground">{translate(language, 'nav.shop')}</Link>
           <span className="mx-2">/</span>
           <span className="text-foreground">{product.name}</span>
         </nav>
 
         {/* Product Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+        <div className={`grid grid-cols-1 lg:grid-cols-2 gap-12 ${isRTL ? 'rtl:grid-flow-row-dense' : ''}`}>
           {/* Images */}
           <div className="space-y-4">
             {/* Main Image */}
@@ -118,27 +121,27 @@ export default function ProductPage() {
               </AnimatePresence>
 
               {/* Badges */}
-              <div className="absolute top-4 left-4 flex flex-col gap-2">
+              <div className={`absolute top-4 ${isRTL ? 'right-4' : 'left-4'} flex flex-col gap-2`}>
                 {product.isNew && (
                   <span className="px-3 py-1 bg-accent text-accent-foreground text-xs font-semibold rounded">
-                    NEW
+                    {translate(language, 'product.new')}
                   </span>
                 )}
                 {product.isLimited && (
                   <span className="px-3 py-1 bg-destructive text-destructive-foreground text-xs font-semibold rounded">
-                    LIMITED
+                    {translate(language, 'product.limited')}
                   </span>
                 )}
                 {product.salePrice && (
                   <span className="px-3 py-1 bg-destructive text-destructive-foreground text-xs font-semibold rounded">
-                    SALE
+                    {translate(language, 'product.sale')}
                   </span>
                 )}
               </div>
             </div>
 
             {/* Thumbnails */}
-            <div className="flex gap-3 overflow-x-auto pb-2">
+            <div className={`flex gap-3 overflow-x-auto pb-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
               {product.images.map((img, i) => (
                 <button
                   key={i}
@@ -162,8 +165,8 @@ export default function ProductPage() {
             </div>
 
             {/* Rating */}
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1">
+            <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+              <div className={`flex items-center gap-1 ${isRTL ? 'flex-row-reverse' : ''}`}>
                 {[...Array(5)].map((_, i) => (
                   <Star
                     key={i}
@@ -176,21 +179,21 @@ export default function ProductPage() {
                 ))}
               </div>
               <span className="text-sm">{product.rating}</span>
-              <span className="text-sm text-muted-foreground">({product.reviewCount} reviews)</span>
+              <span className="text-sm text-muted-foreground">({product.reviewCount} {translate(language, 'product.reviews-count')})</span>
             </div>
 
             {/* Price */}
-            <div className="flex items-center gap-3">
+            <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
               <span className="text-3xl font-bold text-accent">
-                ${product.salePrice || product.price}
+                {product.salePrice || product.price} ج.م
               </span>
               {product.salePrice && (
                 <>
                   <span className="text-xl text-muted-foreground line-through">
-                    ${product.price}
+                    {product.price} ج.م
                   </span>
                   <span className="px-2 py-1 bg-destructive text-destructive-foreground text-xs font-semibold rounded">
-                    {Math.round((1 - product.salePrice / product.price) * 100)}% OFF
+                    {Math.round((1 - product.salePrice / product.price) * 100)}% {translate(language, 'product.off')}
                   </span>
                 </>
               )}
@@ -198,9 +201,9 @@ export default function ProductPage() {
 
             {/* Size Selection */}
             <div>
-              <div className="flex items-center justify-between mb-3">
-                <span className="font-semibold">Select Size</span>
-                <button className="text-sm text-accent hover:underline">Size Guide</button>
+              <div className={`flex items-center justify-between mb-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                <span className="font-semibold">{translate(language, 'product.select-size')}</span>
+                <button className="text-sm text-accent hover:underline">{translate(language, 'product.size-guide')}</button>
               </div>
               <div className="grid grid-cols-4 gap-2">
                 {product.sizes.map((size) => (
@@ -224,7 +227,7 @@ export default function ProductPage() {
 
             {/* Quantity */}
             <div>
-              <span className="font-semibold block mb-3">Quantity</span>
+              <span className="font-semibold block mb-3">{translate(language, 'cart.quantity')}</span>
               <div className="flex items-center gap-4">
                 <button
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
@@ -243,13 +246,13 @@ export default function ProductPage() {
             </div>
 
             {/* Actions */}
-            <div className="flex gap-4">
+            <div className={`flex gap-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
               <button
                 onClick={handleAddToCart}
                 className="flex-1 py-4 bg-accent text-accent-foreground font-semibold rounded-xl flex items-center justify-center gap-2 hover:bg-accent/90 transition-all hover:shadow-[0_0_20px_rgba(245,230,66,0.3)]"
               >
                 <ShoppingBag className="w-5 h-5" />
-                Add to Cart
+                {translate(language, 'product.add-to-cart')}
               </button>
               <button
                 onClick={() => toggle(product)}
@@ -267,15 +270,15 @@ export default function ProductPage() {
               onClick={handleBuyNow}
               className="w-full py-4 bg-secondary text-secondary-foreground font-semibold rounded-xl hover:bg-secondary/80 transition-colors"
             >
-              Buy Now
+              {translate(language, 'product.buy-now')}
             </button>
 
             {/* Benefits */}
             <div className="grid grid-cols-3 gap-4 py-4">
               {[
-                { icon: Truck, text: 'Free Shipping' },
-                { icon: RotateCcw, text: '30-Day Returns' },
-                { icon: Shield, text: 'Authentic' },
+                { icon: Truck, text: translate(language, 'product.free-shipping') },
+                { icon: RotateCcw, text: translate(language, 'product.returns') },
+                { icon: Shield, text: translate(language, 'product.authentic') },
               ].map((item) => (
                 <div key={item.text} className="flex flex-col items-center gap-2 text-center">
                   <item.icon className="w-5 h-5 text-accent" />
@@ -286,21 +289,21 @@ export default function ProductPage() {
 
             {/* Accordions */}
             <div className="border-t border-border">
-              <Accordion id="description" title="Description">
+              <Accordion id="description" title={translate(language, 'product.description')}>
                 {product.description}
               </Accordion>
-              <Accordion id="details" title="Details & Care">
+              <Accordion id="details" title={translate(language, 'product.details')}>
                 <ul className="list-disc list-inside space-y-1">
                   {product.details.map((detail, i) => (
                     <li key={i}>{detail}</li>
                   ))}
                 </ul>
               </Accordion>
-              <Accordion id="shipping" title="Shipping & Returns">
+              <Accordion id="shipping" title={translate(language, 'product.shipping')}>
                 <div className="space-y-2">
-                  <p>Free standard shipping on orders over $150.</p>
-                  <p>Express shipping available for $12.99.</p>
-                  <p>Free returns within 30 days of purchase.</p>
+                  <p>{translate(language, 'product.shipping-desc-1')}</p>
+                  <p>{translate(language, 'product.shipping-desc-2')}</p>
+                  <p>{translate(language, 'product.shipping-desc-3')}</p>
                 </div>
               </Accordion>
             </div>
@@ -310,10 +313,10 @@ export default function ProductPage() {
         {/* Related Products */}
         {relatedProducts.length > 0 && (
           <section className="mt-24">
-            <div className="flex items-end justify-between mb-8">
-              <h2 className="text-2xl md:text-3xl font-display tracking-wider">YOU MAY ALSO LIKE</h2>
-              <Link href="/shop" className="flex items-center gap-2 text-accent hover:underline">
-                View All <ArrowRight className="w-4 h-4" />
+            <div className={`flex items-end justify-between mb-8 ${isRTL ? 'flex-row-reverse' : ''}`}>
+              <h2 className="text-2xl md:text-3xl font-display tracking-wider">{translate(language, 'product.related')}</h2>
+              <Link href="/shop" className={`flex items-center gap-2 text-accent hover:underline ${isRTL ? 'flex-row-reverse' : ''}`}>
+                {translate(language, 'common.view-all')} {isRTL ? <ArrowRight className="w-4 h-4 rotate-180" /> : <ArrowRight className="w-4 h-4" />}
               </Link>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">

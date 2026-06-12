@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { useLanguageStore } from '@/lib/language-store'
+import { useLanguageStore, t as translate } from '@/lib/language-store'
 import {
   TrendingUp,
   Users,
@@ -12,6 +12,7 @@ import {
   Clock,
   ArrowUpRight,
   ArrowDownRight,
+  Download,
 } from 'lucide-react'
 import {
   AreaChart,
@@ -64,35 +65,92 @@ const conversionData = [
   { name: 'Week 4', rate: 4.1 },
 ]
 
+const topCustomers = [
+  { rank: 1, name: 'Ahmed Hassan', orders: 24, spent: '$8,450', avatar: 'AH', trend: 'up' },
+  { rank: 2, name: 'Sarah Johnson', orders: 19, spent: '$6,230', avatar: 'SJ', trend: 'up' },
+  { rank: 3, name: 'Mohammed Ali', orders: 17, spent: '$5,890', avatar: 'MA', trend: 'down' },
+  { rank: 4, name: 'Emily Chen', orders: 15, spent: '$4,720', avatar: 'EC', trend: 'up' },
+  { rank: 5, name: 'Omar Khaled', orders: 12, spent: '$3,980', avatar: 'OK', trend: 'down' },
+]
+
 const COLORS = ['oklch(0.9 0.15 95)', 'oklch(0.7 0.15 200)', 'oklch(0.65 0.25 25)', 'oklch(0.8 0.1 150)']
 
 export default function AnalyticsPage() {
-  const { t, language } = useLanguageStore()
+  const { language } = useLanguageStore()
   const isRTL = language === 'ar'
   const [timeRange, setTimeRange] = useState('this-week')
+  const analyticsRef = useState<HTMLDivElement | null>(null)[0]
 
   const timeRanges = [
-    { value: 'today', label: t('dashboard.today') },
-    { value: 'this-week', label: t('dashboard.this-week') },
-    { value: 'this-month', label: t('dashboard.this-month') },
-    { value: 'this-year', label: t('dashboard.this-year') },
+    { value: 'today', label: translate(language, 'dashboard.today') },
+    { value: 'this-week', label: translate(language, 'dashboard.this-week') },
+    { value: 'this-month', label: translate(language, 'dashboard.this-month') },
+    { value: 'this-year', label: translate(language, 'dashboard.this-year') },
   ]
 
+  const handleExportAnalytics = async () => {
+    const html2canvas = (await import('html2canvas')).default
+    const jsPDF = (await import('jspdf')).default
+    
+    const element = document.querySelector('div[class*="space-y-6"]') as HTMLElement
+    if (!element) {
+      console.error('Analytics element not found')
+      return
+    }
+
+    // Create a style override to convert oklch colors to hex
+    const style = document.createElement('style')
+    style.textContent = `
+      * {
+        color: #ffffff !important;
+        background-color: #0a0a0a !important;
+        border-color: #333333 !important;
+      }
+      [style*="oklch"] {
+        background-color: #1a1a1a !important;
+        color: #ffffff !important;
+      }
+    `
+    document.head.appendChild(style)
+
+    try {
+      const canvas = await html2canvas(element, {
+        backgroundColor: '#0a0a0a',
+        scale: 2,
+        logging: true,
+        useCORS: true,
+        allowTaint: true,
+        ignoreElements: (element) => element.tagName === 'BUTTON',
+      })
+
+      const imgData = canvas.toDataURL('image/png')
+      const pdf = new jsPDF('p', 'mm', 'a4')
+      
+      const imgWidth = 210
+      const pageHeight = 297
+      const imgHeight = (canvas.height * imgWidth) / canvas.width
+      let heightLeft = imgHeight
+      let position = 0
+
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
+      heightLeft -= pageHeight
+
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight
+        pdf.addPage()
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
+        heightLeft -= pageHeight
+      }
+
+      pdf.save(`analytics_export_${new Date().toISOString().split('T')[0]}.pdf`)
+    } catch (error) {
+      console.error('Export failed:', error)
+    } finally {
+      document.head.removeChild(style)
+    }
+  }
+
   const stats = [
-    {
-      title: language === 'ar' ? 'الزوار' : 'Visitors',
-      value: '32,450',
-      change: '+12.5%',
-      trend: 'up',
-      icon: Users,
-    },
-    {
-      title: language === 'ar' ? 'مشاهدات الصفحة' : 'Page Views',
-      value: '124,500',
-      change: '+8.3%',
-      trend: 'up',
-      icon: Eye,
-    },
     {
       title: language === 'ar' ? 'معدل التحويل' : 'Conversion Rate',
       value: '3.2%',
@@ -113,113 +171,125 @@ export default function AnalyticsPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className={`flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between ${isRTL ? 'sm:flex-row-reverse' : ''}`}>
-        <h2 className="text-2xl font-bold">{t('dashboard.analytics')}</h2>
-        <select
-          value={timeRange}
-          onChange={(e) => setTimeRange(e.target.value)}
-          className={`bg-secondary border border-border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-accent ${isRTL ? 'text-right' : ''}`}
-        >
-          {timeRanges.map((range) => (
-            <option key={range.value} value={range.value}>
-              {range.label}
-            </option>
-          ))}
-        </select>
+        <h2 className="text-2xl font-bold">{translate(language, 'dashboard.analytics')}</h2>
+        <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+          <select
+            value={timeRange}
+            onChange={(e) => setTimeRange(e.target.value)}
+            className={`bg-secondary border border-border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-accent ${isRTL ? 'text-right' : ''}`}
+          >
+            {timeRanges.map((range) => (
+              <option key={range.value} value={range.value}>
+                {range.label}
+              </option>
+            ))}
+          </select>
+          <button
+            onClick={handleExportAnalytics}
+            className={`flex items-center gap-2 px-4 py-2 bg-secondary border border-border rounded-lg hover:bg-secondary/80 transition-colors cursor-pointer`}
+          >
+            <Download className="w-5 h-5" />
+            {translate(language, 'dashboard.export')}
+          </button>
+        </div>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((stat, index) => (
-          <motion.div
-            key={stat.title}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
-            className="bg-card border border-border rounded-xl p-5"
-          >
-            <div className={`flex items-center justify-between mb-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
-              <div className="p-2 bg-secondary rounded-lg">
-                <stat.icon className="w-5 h-5 text-accent" />
-              </div>
-              <div className={`flex items-center gap-1 ${isRTL ? 'flex-row-reverse' : ''}`}>
-                {stat.trend === 'up' ? (
-                  <ArrowUpRight className="w-4 h-4 text-green-500" />
-                ) : (
-                  <ArrowDownRight className="w-4 h-4 text-red-500" />
-                )}
-                <span className={`text-sm ${stat.trend === 'up' ? 'text-green-500' : 'text-red-500'}`}>
-                  {stat.change}
+      {/* Stats + Leaderboard */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Leaderboard */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="bg-card border border-border rounded-xl p-6"
+        >
+          <h3 className={`text-lg font-semibold mb-4 ${isRTL ? 'text-right' : ''}`}>
+            {language === 'ar' ? 'أكثر العملاء شراءً' : 'Top Customers'}
+          </h3>
+          <div className="space-y-3">
+            {topCustomers.map((customer, index) => (
+              <div
+                key={customer.rank}
+                className={`flex items-center gap-3 p-3 bg-secondary/50 rounded-lg ${isRTL ? 'flex-row-reverse' : ''}`}
+              >
+                {/* Rank */}
+                <span className={`text-sm font-bold w-5 text-center ${
+                  index === 0 ? 'text-yellow-400' :
+                  index === 1 ? 'text-gray-400' :
+                  index === 2 ? 'text-orange-400' :
+                  'text-muted-foreground'
+                }`}>
+                  {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : customer.rank}
                 </span>
+
+                {/* Avatar */}
+                <div className="w-9 h-9 rounded-full bg-accent/20 flex items-center justify-center text-accent text-xs font-bold flex-shrink-0">
+                  {customer.avatar}
+                </div>
+
+                {/* Name */}
+                <div className={`flex-1 min-w-0 ${isRTL ? 'text-right' : ''}`}>
+                  <p className="font-medium text-sm truncate">{customer.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {customer.orders} {language === 'ar' ? 'طلب' : 'orders'}
+                  </p>
+                </div>
+
+                {/* Spent + trend */}
+                <div className={`flex items-center gap-1 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                  <span className="font-semibold text-accent text-sm">{customer.spent}</span>
+                  {customer.trend === 'up' ? (
+                    <ArrowUpRight className="w-3 h-3 text-green-500" />
+                  ) : (
+                    <ArrowDownRight className="w-3 h-3 text-red-500" />
+                  )}
+                </div>
               </div>
-            </div>
-            <div className={isRTL ? 'text-right' : ''}>
-              <p className="text-2xl font-bold">{stat.value}</p>
-              <p className="text-sm text-muted-foreground">{stat.title}</p>
-            </div>
-          </motion.div>
-        ))}
+            ))}
+          </div>
+        </motion.div>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 gap-4 content-start">
+          {stats.map((stat, index) => (
+            <motion.div
+              key={stat.title}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 + index * 0.1 }}
+              className="bg-card border border-border rounded-xl p-5"
+            >
+              <div className={`flex items-center justify-between mb-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                <div className="p-2 bg-secondary rounded-lg">
+                  <stat.icon className="w-5 h-5 text-accent" />
+                </div>
+                <div className={`flex items-center gap-1 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                  {stat.trend === 'up' ? (
+                    <ArrowUpRight className="w-4 h-4 text-green-500" />
+                  ) : (
+                    <ArrowDownRight className="w-4 h-4 text-red-500" />
+                  )}
+                  <span className={`text-sm ${stat.trend === 'up' ? 'text-green-500' : 'text-red-500'}`}>
+                    {stat.change}
+                  </span>
+                </div>
+              </div>
+              <div className={isRTL ? 'text-right' : ''}>
+                <p className="text-2xl font-bold">{stat.value}</p>
+                <p className="text-sm text-muted-foreground">{stat.title}</p>
+              </div>
+            </motion.div>
+          ))}
+        </div>
       </div>
 
       {/* Charts Row 1 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Visitors Chart */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="bg-card border border-border rounded-xl p-6"
-        >
-          <h3 className={`text-lg font-semibold mb-4 ${isRTL ? 'text-right' : ''}`}>
-            {language === 'ar' ? 'الزوار ومشاهدات الصفحة' : 'Visitors & Page Views'}
-          </h3>
-          <div className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={visitorData}>
-                <defs>
-                  <linearGradient id="colorVisitors" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="oklch(0.9 0.15 95)" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="oklch(0.9 0.15 95)" stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient id="colorPageViews" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="oklch(0.7 0.15 200)" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="oklch(0.7 0.15 200)" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.2 0 0)" />
-                <XAxis dataKey="name" stroke="oklch(0.55 0 0)" fontSize={12} />
-                <YAxis stroke="oklch(0.55 0 0)" fontSize={12} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'oklch(0.12 0 0)',
-                    border: '1px solid oklch(0.2 0 0)',
-                    borderRadius: '8px',
-                    color: 'oklch(0.98 0 0)',
-                  }}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="visitors"
-                  stroke="oklch(0.9 0.15 95)"
-                  fillOpacity={1}
-                  fill="url(#colorVisitors)"
-                />
-                <Area
-                  type="monotone"
-                  dataKey="pageViews"
-                  stroke="oklch(0.7 0.15 200)"
-                  fillOpacity={1}
-                  fill="url(#colorPageViews)"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </motion.div>
-
         {/* Sales Chart */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
+          transition={{ delay: 0.4 }}
           className="bg-card border border-border rounded-xl p-6"
         >
           <h3 className={`text-lg font-semibold mb-4 ${isRTL ? 'text-right' : ''}`}>
@@ -233,11 +303,13 @@ export default function AnalyticsPage() {
                 <YAxis stroke="oklch(0.55 0 0)" fontSize={12} />
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: 'oklch(0.12 0 0)',
-                    border: '1px solid oklch(0.2 0 0)',
+                    backgroundColor: '#1a1a1a',
+                    border: '1px solid #333333',
                     borderRadius: '8px',
-                    color: 'oklch(0.98 0 0)',
+                    color: '#FFFFFF',
                   }}
+                  itemStyle={{ color: '#FFFFFF' }}
+                  labelStyle={{ color: '#FFFFFF' }}
                 />
                 <Bar dataKey="sales" fill="oklch(0.9 0.15 95)" radius={[4, 4, 0, 0]} />
               </BarChart>
@@ -252,7 +324,7 @@ export default function AnalyticsPage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6 }}
+          transition={{ delay: 0.5 }}
           className="bg-card border border-border rounded-xl p-6"
         >
           <h3 className={`text-lg font-semibold mb-4 ${isRTL ? 'text-right' : ''}`}>
@@ -276,11 +348,13 @@ export default function AnalyticsPage() {
                 </Pie>
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: 'oklch(0.12 0 0)',
-                    border: '1px solid oklch(0.2 0 0)',
+                    backgroundColor: '#1a1a1a',
+                    border: '1px solid #333333',
                     borderRadius: '8px',
-                    color: 'oklch(0.98 0 0)',
+                    color: '#FFFFFF',
                   }}
+                  itemStyle={{ color: '#FFFFFF' }}
+                  labelStyle={{ color: '#FFFFFF' }}
                 />
               </PieChart>
             </ResponsiveContainer>
@@ -304,7 +378,7 @@ export default function AnalyticsPage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.7 }}
+          transition={{ delay: 0.6 }}
           className="bg-card border border-border rounded-xl p-6"
         >
           <h3 className={`text-lg font-semibold mb-4 ${isRTL ? 'text-right' : ''}`}>
@@ -318,11 +392,13 @@ export default function AnalyticsPage() {
                 <YAxis stroke="oklch(0.55 0 0)" fontSize={12} unit="%" />
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: 'oklch(0.12 0 0)',
-                    border: '1px solid oklch(0.2 0 0)',
+                    backgroundColor: '#1a1a1a',
+                    border: '1px solid #333333',
                     borderRadius: '8px',
-                    color: 'oklch(0.98 0 0)',
+                    color: '#FFFFFF',
                   }}
+                  itemStyle={{ color: '#FFFFFF' }}
+                  labelStyle={{ color: '#FFFFFF' }}
                   formatter={(value: number) => [`${value}%`, 'Rate']}
                 />
                 <Line
@@ -338,35 +414,35 @@ export default function AnalyticsPage() {
         </motion.div>
       </div>
 
-      {/* Top Pages */}
+      {/* Top Products */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.8 }}
+        transition={{ delay: 0.7 }}
         className="bg-card border border-border rounded-xl p-6"
       >
         <h3 className={`text-lg font-semibold mb-4 ${isRTL ? 'text-right' : ''}`}>
-          {language === 'ar' ? 'أفضل الصفحات' : 'Top Pages'}
+          {language === 'ar' ? 'أفضل المنتجات' : 'Top Products'}
         </h3>
         <div className="space-y-3">
           {[
-            { page: '/shop', views: '45,230', change: '+12%' },
-            { page: '/product/air-jordan-1', views: '32,100', change: '+8%' },
-            { page: '/', views: '28,450', change: '+5%' },
-            { page: '/product/nike-air-max', views: '21,300', change: '+15%' },
-            { page: '/checkout', views: '18,900', change: '+3%' },
+            { name: 'Air Jordan 1 High', sales: 245, revenue: '$73,500' },
+            { name: 'Nike Air Max 90', sales: 198, revenue: '$59,400' },
+            { name: 'Yeezy Boost 350', sales: 176, revenue: '$61,600' },
+            { name: 'Nike Dunk Low', sales: 154, revenue: '$46,200' },
+            { name: 'New Balance 550', sales: 132, revenue: '$39,600' },
           ].map((item, index) => (
             <div
-              key={item.page}
+              key={item.name}
               className={`flex items-center justify-between p-3 bg-secondary/50 rounded-lg ${isRTL ? 'flex-row-reverse' : ''}`}
             >
               <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
                 <span className="text-muted-foreground w-6">{index + 1}.</span>
-                <span className="font-medium">{item.page}</span>
+                <span className="font-medium">{item.name}</span>
               </div>
               <div className={`flex items-center gap-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
-                <span className="text-muted-foreground">{item.views} {language === 'ar' ? 'مشاهدة' : 'views'}</span>
-                <span className="text-green-500 text-sm">{item.change}</span>
+                <span className="text-muted-foreground">{item.sales} {language === 'ar' ? 'مبيعات' : 'sales'}</span>
+                <span className="text-accent font-semibold">{item.revenue}</span>
               </div>
             </div>
           ))}

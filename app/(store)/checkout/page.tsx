@@ -1,22 +1,21 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { Check, CreditCard, Truck, ShoppingBag, ChevronLeft, Lock } from 'lucide-react'
 import { useCartStore } from '@/lib/store'
+import { useLanguageStore, t as translate } from '@/lib/language-store'
 
 type CheckoutStep = 'shipping' | 'delivery' | 'payment' | 'review'
 
 export default function CheckoutPage() {
-  const router = useRouter()
+  const { language } = useLanguageStore()
+  const isRTL = language === 'ar'
   const { items, getTotal, clearCart } = useCartStore()
   const [currentStep, setCurrentStep] = useState<CheckoutStep>('shipping')
   const [orderComplete, setOrderComplete] = useState(false)
-  const [mounted, setMounted] = useState(false)
-
   const [formData, setFormData] = useState({
     email: '',
     firstName: '',
@@ -35,20 +34,16 @@ export default function CheckoutPage() {
     cvv: '',
   })
 
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  const subtotal = mounted ? getTotal() : 0
+  const subtotal = getTotal()
   const shipping = formData.shippingMethod === 'express' ? 12.99 : formData.shippingMethod === 'overnight' ? 29.99 : (subtotal > 150 ? 0 : 9.99)
   const tax = subtotal * 0.08
   const total = subtotal + shipping + tax
 
   const steps: { id: CheckoutStep; label: string; icon: typeof ShoppingBag }[] = [
-    { id: 'shipping', label: 'Shipping', icon: Truck },
-    { id: 'delivery', label: 'Delivery', icon: Truck },
-    { id: 'payment', label: 'Payment', icon: CreditCard },
-    { id: 'review', label: 'Review', icon: Check },
+    { id: 'shipping', label: translate(language, 'checkout.shipping'), icon: Truck },
+    { id: 'delivery', label: translate(language, 'checkout.delivery'), icon: Truck },
+    { id: 'payment', label: translate(language, 'checkout.payment'), icon: CreditCard },
+    { id: 'review', label: translate(language, 'checkout.review'), icon: Check },
   ]
 
   const currentStepIndex = steps.findIndex(s => s.id === currentStep)
@@ -68,25 +63,17 @@ export default function CheckoutPage() {
     setFormData(prev => ({ ...prev, [field]: value }))
   }
 
-  if (!mounted) {
-    return (
-      <div className="min-h-screen pt-24 flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-accent border-t-transparent rounded-full animate-spin" />
-      </div>
-    )
-  }
-
   if (items.length === 0 && !orderComplete) {
     return (
       <div className="min-h-screen pt-24 pb-20">
         <div className="container mx-auto px-4 text-center py-20">
           <ShoppingBag className="w-24 h-24 mx-auto text-muted-foreground mb-6" />
-          <h2 className="text-2xl font-semibold mb-4">Your cart is empty</h2>
+          <h2 className="text-2xl font-semibold mb-4">{translate(language, 'checkout.empty-cart')}</h2>
           <Link
             href="/shop"
-            className="inline-flex items-center gap-2 px-8 py-4 bg-accent text-accent-foreground font-semibold rounded-full hover:bg-accent/90 transition-colors"
+            className={`inline-flex items-center gap-2 px-8 py-4 bg-accent text-accent-foreground font-semibold rounded-full hover:bg-accent/90 transition-colors ${isRTL ? 'flex-row-reverse' : ''}`}
           >
-            Continue Shopping
+            {translate(language, 'checkout.continue-shopping')}
           </Link>
         </div>
       </div>
@@ -118,7 +105,7 @@ export default function CheckoutPage() {
               #SNK{Math.random().toString(36).substr(2, 9).toUpperCase()}
             </p>
             <p className="text-muted-foreground mb-8">
-              We&apos;ll send you a confirmation email with tracking details shortly.
+              {translate(language, 'checkout.confirmation')}
             </p>
             <Link
               href="/shop"
@@ -139,18 +126,18 @@ export default function CheckoutPage() {
         <div className="mb-8">
           <Link
             href="/cart"
-            className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-4"
+            className={`inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-4 ${isRTL ? 'flex-row-reverse' : ''}`}
           >
-            <ChevronLeft className="w-4 h-4" />
-            Back to Cart
+            {isRTL ? <ChevronLeft className="w-4 h-4 rotate-180" /> : <ChevronLeft className="w-4 h-4" />}
+            {translate(language, 'checkout.back-cart')}
           </Link>
-          <h1 className="text-4xl md:text-5xl font-display tracking-wider">CHECKOUT</h1>
+          <h1 className="text-4xl md:text-5xl font-display tracking-wider">{translate(language, 'checkout.title')}</h1>
         </div>
 
         {/* Progress Steps */}
-        <div className="flex items-center justify-center mb-12">
+        <div className={`flex items-center justify-center mb-12 ${isRTL ? 'flex-row-reverse' : ''}`}>
           {steps.map((step, i) => (
-            <div key={step.id} className="flex items-center">
+            <div key={step.id} className={`flex items-center ${isRTL ? 'flex-row-reverse' : ''}`}>
               <div
                 className={`flex items-center gap-2 px-4 py-2 rounded-full ${
                   i <= currentStepIndex
@@ -172,7 +159,7 @@ export default function CheckoutPage() {
           ))}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+        <div className={`grid grid-cols-1 lg:grid-cols-3 gap-12 ${isRTL ? 'rtl:grid-flow-row-dense' : ''}`}>
           {/* Form */}
           <div className="lg:col-span-2">
             <form onSubmit={handleSubmit}>
@@ -222,7 +209,7 @@ export default function CheckoutPage() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium mb-2">Address</label>
+                      <label className="block text-sm font-medium mb-2">{translate(language, 'checkout.address')}</label>
                       <input
                         type="text"
                         value={formData.address}
@@ -275,14 +262,14 @@ export default function CheckoutPage() {
                       />
                     </div>
 
-                    <label className="flex items-center gap-2 cursor-pointer">
+                    <label className={`flex items-center gap-2 cursor-pointer ${isRTL ? 'flex-row-reverse' : ''}`}>
                       <input
                         type="checkbox"
                         checked={formData.saveInfo}
                         onChange={(e) => updateForm('saveInfo', e.target.checked)}
                         className="w-4 h-4 rounded border-border bg-input accent-accent"
                       />
-                      <span className="text-sm">Save this information for next time</span>
+                      <span className="text-sm">{translate(language, 'checkout.save-info')}</span>
                     </label>
                   </motion.div>
                 )}
@@ -290,27 +277,23 @@ export default function CheckoutPage() {
                 {currentStep === 'delivery' && (
                   <motion.div
                     key="delivery"
-                    initial={{ opacity: 0, x: 20 }}
+                    initial={{ opacity: 0, x: isRTL ? -20 : 20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
+                    exit={{ opacity: 0, x: isRTL ? 20 : -20 }}
                     className="space-y-4"
                   >
-                    <h2 className="text-xl font-semibold mb-6">Shipping Method</h2>
+                    <h2 className="text-xl font-semibold mb-6">{translate(language, 'checkout.shipping-method')}</h2>
                     
                     {[
-                      { id: 'standard', name: 'Standard Shipping', price: subtotal > 150 ? 'Free' : '$9.99', time: '5-7 business days' },
-                      { id: 'express', name: 'Express Shipping', price: '$12.99', time: '2-3 business days' },
-                      { id: 'overnight', name: 'Overnight Shipping', price: '$29.99', time: 'Next business day' },
+                      { id: 'standard', name: translate(language, 'checkout.standard'), price: subtotal > 5000 ? translate(language, 'cart.free') : '60 ج.م', time: `5-7 ${translate(language, 'checkout.business-days')}` },
+                      { id: 'express', name: translate(language, 'checkout.express'), price: '120 ج.م', time: `2-3 ${translate(language, 'checkout.business-days')}` },
+                      { id: 'overnight', name: translate(language, 'checkout.overnight'), price: '250 ج.م', time: translate(language, 'checkout.next-day') },
                     ].map((method) => (
                       <label
                         key={method.id}
-                        className={`flex items-center justify-between p-4 rounded-xl border cursor-pointer transition-colors ${
-                          formData.shippingMethod === method.id
-                            ? 'border-accent bg-accent/5'
-                            : 'border-border hover:border-accent/50'
-                        }`}
+                        className={`flex items-center justify-between p-4 rounded-xl border cursor-pointer transition-colors ${isRTL ? 'flex-row-reverse' : ''}`}
                       >
-                        <div className="flex items-center gap-3">
+                        <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
                           <input
                             type="radio"
                             name="shipping"
@@ -341,7 +324,7 @@ export default function CheckoutPage() {
                     <h2 className="text-xl font-semibold mb-6">Payment Information</h2>
                     
                     <div className="p-4 bg-card rounded-xl border border-border">
-                      <div className="flex items-center gap-2 mb-4">
+                      <div className={`flex items-center gap-2 mb-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
                         <CreditCard className="w-5 h-5" />
                         <span className="font-medium">Credit / Debit Card</span>
                       </div>
@@ -360,7 +343,7 @@ export default function CheckoutPage() {
                         </div>
                         
                         <div>
-                          <label className="block text-sm font-medium mb-2">Name on Card</label>
+                          <label className="block text-sm font-medium mb-2">{translate(language, 'checkout.card-name')}</label>
                           <input
                             type="text"
                             value={formData.cardName}
@@ -372,7 +355,7 @@ export default function CheckoutPage() {
                         
                         <div className="grid grid-cols-2 gap-4">
                           <div>
-                            <label className="block text-sm font-medium mb-2">Expiry</label>
+                            <label className="block text-sm font-medium mb-2">{translate(language, 'checkout.expiry')}</label>
                             <input
                               type="text"
                               value={formData.expiry}
@@ -383,7 +366,7 @@ export default function CheckoutPage() {
                             />
                           </div>
                           <div>
-                            <label className="block text-sm font-medium mb-2">CVV</label>
+                            <label className="block text-sm font-medium mb-2">{translate(language, 'checkout.cvv')}</label>
                             <input
                               type="text"
                               value={formData.cvv}
@@ -397,9 +380,9 @@ export default function CheckoutPage() {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <div className={`flex items-center gap-2 text-sm text-muted-foreground ${isRTL ? 'flex-row-reverse' : ''}`}>
                       <Lock className="w-4 h-4" />
-                      Your payment information is secure and encrypted
+                      {translate(language, 'checkout.secure')}
                     </div>
                   </motion.div>
                 )}
@@ -407,15 +390,15 @@ export default function CheckoutPage() {
                 {currentStep === 'review' && (
                   <motion.div
                     key="review"
-                    initial={{ opacity: 0, x: 20 }}
+                    initial={{ opacity: 0, x: isRTL ? -20 : 20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
+                    exit={{ opacity: 0, x: isRTL ? 20 : -20 }}
                     className="space-y-6"
                   >
                     <h2 className="text-xl font-semibold mb-6">Review Your Order</h2>
                     
                     <div className="p-4 bg-card rounded-xl border border-border">
-                      <h3 className="font-medium mb-2">Shipping Address</h3>
+                      <h3 className="font-medium mb-2">{translate(language, 'checkout.shipping-address')}</h3>
                       <p className="text-muted-foreground">
                         {formData.firstName} {formData.lastName}<br />
                         {formData.address}<br />
@@ -434,7 +417,7 @@ export default function CheckoutPage() {
                       <h3 className="font-medium mb-4">Order Items</h3>
                       <div className="space-y-4">
                         {items.map((item) => (
-                          <div key={`${item.product.id}-${item.size}`} className="flex gap-4">
+                          <div key={`${item.product.id}-${item.size}`} className={`flex gap-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
                             <div className="relative w-16 h-16 bg-secondary rounded-lg overflow-hidden flex-shrink-0">
                               <Image
                                 src={item.product.images[0]}
@@ -446,11 +429,11 @@ export default function CheckoutPage() {
                             <div className="flex-1 min-w-0">
                               <p className="font-medium">{item.product.name}</p>
                               <p className="text-sm text-muted-foreground">
-                                Size: {item.size} | Qty: {item.quantity}
+                                {translate(language, 'product.size')}: {item.size} | {translate(language, 'cart.quantity')}: {item.quantity}
                               </p>
                             </div>
                             <p className="font-medium">
-                              ${((item.product.salePrice || item.product.price) * item.quantity).toFixed(2)}
+                              {((item.product.salePrice || item.product.price) * item.quantity).toLocaleString()} ج.م
                             </p>
                           </div>
                         ))}
@@ -460,7 +443,7 @@ export default function CheckoutPage() {
                 )}
               </AnimatePresence>
 
-              <div className="flex gap-4 mt-8">
+              <div className={`flex gap-4 mt-8 ${isRTL ? 'flex-row-reverse' : ''}`}>
                 {currentStep !== 'shipping' && (
                   <button
                     type="button"
@@ -477,7 +460,7 @@ export default function CheckoutPage() {
                   type="submit"
                   className="flex-1 py-4 bg-accent text-accent-foreground font-semibold rounded-xl hover:bg-accent/90 transition-all hover:shadow-[0_0_20px_rgba(245,230,66,0.3)]"
                 >
-                  {currentStep === 'review' ? 'Place Order' : 'Continue'}
+                  {currentStep === 'review' ? translate(language, 'checkout.place-order') : translate(language, 'common.continue')}
                 </button>
               </div>
             </form>
@@ -490,7 +473,7 @@ export default function CheckoutPage() {
               
               <div className="space-y-4 max-h-64 overflow-y-auto">
                 {items.map((item) => (
-                  <div key={`${item.product.id}-${item.size}`} className="flex gap-3">
+                  <div key={`${item.product.id}-${item.size}`} className={`flex gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
                     <div className="relative w-16 h-16 bg-secondary rounded-lg overflow-hidden flex-shrink-0">
                       <Image
                         src={item.product.images[0]}
@@ -498,16 +481,16 @@ export default function CheckoutPage() {
                         fill
                         className="object-cover"
                       />
-                      <span className="absolute -top-1 -right-1 w-5 h-5 bg-accent text-accent-foreground text-xs font-medium rounded-full flex items-center justify-center">
+                      <span className={`absolute -top-1 ${isRTL ? '-left-1' : '-right-1'} w-5 h-5 bg-accent text-accent-foreground text-xs font-medium rounded-full flex items-center justify-center`}>
                         {item.quantity}
                       </span>
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-sm truncate">{item.product.name}</p>
-                      <p className="text-xs text-muted-foreground">Size: {item.size}</p>
+                      <p className="text-xs text-muted-foreground">{translate(language, 'product.size')}: {item.size}</p>
                     </div>
                     <p className="text-sm font-medium">
-                      ${((item.product.salePrice || item.product.price) * item.quantity).toFixed(2)}
+                      {((item.product.salePrice || item.product.price) * item.quantity).toLocaleString()} ج.م
                     </p>
                   </div>
                 ))}
@@ -516,21 +499,21 @@ export default function CheckoutPage() {
               <div className="space-y-3 py-4 border-t border-b border-border">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Subtotal</span>
-                  <span>${subtotal.toFixed(2)}</span>
+                  <span>{subtotal.toLocaleString()} ج.م</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Shipping</span>
-                  <span>{shipping === 0 ? 'Free' : `$${shipping.toFixed(2)}`}</span>
+                  <span>{shipping === 0 ? 'Free' : `${shipping.toLocaleString()} ج.م`}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Tax</span>
-                  <span>${tax.toFixed(2)}</span>
+                  <span>{tax.toLocaleString()} ج.م</span>
                 </div>
               </div>
 
               <div className="flex justify-between text-lg font-semibold">
                 <span>Total</span>
-                <span className="text-accent">${total.toFixed(2)}</span>
+                <span className="text-accent">{total.toLocaleString()} ج.م</span>
               </div>
             </div>
           </div>

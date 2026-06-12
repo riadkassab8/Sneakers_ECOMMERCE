@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { useLanguageStore } from '@/lib/language-store'
+import { useLanguageStore, t as translate } from '@/lib/language-store'
 import {
   Search,
   ChevronLeft,
@@ -28,7 +28,7 @@ const mockCustomers = [
 ]
 
 export default function CustomersPage() {
-  const { t, language } = useLanguageStore()
+  const { language } = useLanguageStore()
   const isRTL = language === 'ar'
   const [searchQuery, setSearchQuery] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
@@ -51,7 +51,7 @@ export default function CustomersPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className={`flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between ${isRTL ? 'sm:flex-row-reverse' : ''}`}>
-        <h2 className="text-2xl font-bold">{t('dashboard.customers')}</h2>
+        <h2 className="text-2xl font-bold">{translate(language, 'dashboard.customers')}</h2>
         <div className="text-sm text-muted-foreground">
           {language === 'ar' 
             ? `إجمالي العملاء: ${mockCustomers.length}`
@@ -64,7 +64,7 @@ export default function CustomersPage() {
         <Search className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground ${isRTL ? 'right-3' : 'left-3'}`} />
         <input
           type="text"
-          placeholder={t('dashboard.search-customers')}
+          placeholder={translate(language, 'dashboard.search-customers')}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className={`w-full max-w-md bg-secondary border border-border rounded-lg py-2 focus:outline-none focus:ring-2 focus:ring-accent ${isRTL ? 'pr-10 pl-4 text-right' : 'pl-10 pr-4'}`}
@@ -125,7 +125,7 @@ export default function CustomersPage() {
           <button
             onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
             disabled={currentPage === 1}
-            className="p-2 rounded-lg hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed"
+            className="p-2 rounded-lg hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           >
             <ChevronLeft className={`w-5 h-5 ${isRTL ? 'rotate-180' : ''}`} />
           </button>
@@ -135,7 +135,7 @@ export default function CustomersPage() {
           <button
             onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
             disabled={currentPage === totalPages || totalPages === 0}
-            className="p-2 rounded-lg hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed"
+            className="p-2 rounded-lg hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           >
             <ChevronRight className={`w-5 h-5 ${isRTL ? 'rotate-180' : ''}`} />
           </button>
@@ -201,9 +201,9 @@ export default function CustomersPage() {
 
             <button
               onClick={() => setSelectedCustomer(null)}
-              className="w-full mt-6 px-4 py-2 bg-accent text-accent-foreground rounded-lg hover:bg-accent/90 transition-colors"
+              className="w-full mt-6 px-4 py-2 bg-accent text-accent-foreground rounded-lg hover:bg-accent/90 transition-colors cursor-pointer"
             >
-              {t('common.close')}
+              {translate(language, 'common.close')}
             </button>
           </motion.div>
         </motion.div>

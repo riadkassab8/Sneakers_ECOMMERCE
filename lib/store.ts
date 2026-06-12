@@ -1,5 +1,7 @@
+'use client'
+
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { persist, createJSONStorage } from 'zustand/middleware'
 
 export interface Product {
   id: string
@@ -100,7 +102,11 @@ export const useCartStore = create<CartStore>()(
         return get().items.reduce((count, item) => count + item.quantity, 0)
       },
     }),
-    { name: 'sneaker-cart' }
+    {
+      name: 'sneaker-cart',
+      storage: createJSONStorage(() => localStorage),
+      skipHydration: true,
+    }
   )
 )
 
@@ -121,7 +127,11 @@ export const useWishlistStore = create<WishlistStore>()(
         return get().items.some((item) => item.id === id)
       },
     }),
-    { name: 'sneaker-wishlist' }
+    {
+      name: 'sneaker-wishlist',
+      storage: createJSONStorage(() => localStorage),
+      skipHydration: true,
+    }
   )
 )
 

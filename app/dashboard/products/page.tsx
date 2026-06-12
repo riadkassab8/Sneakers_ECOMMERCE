@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useLanguageStore } from '@/lib/language-store'
+import { useLanguageStore, t as translate } from '@/lib/language-store'
 import { products, Product } from '@/lib/products'
 import Image from 'next/image'
 import {
@@ -16,7 +16,7 @@ import {
 } from 'lucide-react'
 
 export default function ProductsPage() {
-  const { t, language } = useLanguageStore()
+  const { language } = useLanguageStore()
   const isRTL = language === 'ar'
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedBrand, setSelectedBrand] = useState<string>('all')
@@ -60,13 +60,13 @@ export default function ProductsPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className={`flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between ${isRTL ? 'sm:flex-row-reverse' : ''}`}>
-        <h2 className="text-2xl font-bold">{t('dashboard.products')}</h2>
+        <h2 className="text-2xl font-bold">{translate(language, 'dashboard.products')}</h2>
         <button
           onClick={handleAddNew}
-          className={`flex items-center gap-2 px-4 py-2 bg-accent text-accent-foreground rounded-lg hover:bg-accent/90 transition-colors ${isRTL ? 'flex-row-reverse' : ''}`}
+          className={`flex items-center gap-2 px-4 py-2 bg-accent text-accent-foreground rounded-lg hover:bg-accent/90 transition-colors ${isRTL ? 'flex-row-reverse' : ''} cursor-pointer`}
         >
           <Plus className="w-5 h-5" />
-          {t('dashboard.add-product')}
+          {translate(language, 'dashboard.add-product')}
         </button>
       </div>
 
@@ -76,7 +76,7 @@ export default function ProductsPage() {
           <Search className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground ${isRTL ? 'right-3' : 'left-3'}`} />
           <input
             type="text"
-            placeholder={t('dashboard.search-products')}
+            placeholder={translate(language, 'dashboard.search-products')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className={`w-full bg-secondary border border-border rounded-lg py-2 focus:outline-none focus:ring-2 focus:ring-accent ${isRTL ? 'pr-10 pl-4 text-right' : 'pl-10 pr-4'}`}
@@ -117,7 +117,7 @@ export default function ProductsPage() {
                   {language === 'ar' ? 'المخزون' : 'Stock'}
                 </th>
                 <th className={`px-4 py-3 text-sm font-medium text-muted-foreground ${isRTL ? 'text-left' : 'text-right'}`}>
-                  {t('dashboard.action')}
+                  {translate(language, 'dashboard.action')}
                 </th>
               </tr>
             </thead>
@@ -146,37 +146,37 @@ export default function ProductsPage() {
                   <td className={`px-4 py-3 text-muted-foreground ${isRTL ? 'text-right' : ''}`}>{product.brand}</td>
                   <td className={`px-4 py-3 text-muted-foreground ${isRTL ? 'text-right' : ''}`}>{product.category}</td>
                   <td className={`px-4 py-3 ${isRTL ? 'text-right' : ''}`}>
-                    <span className="font-semibold">${product.price}</span>
-                    {product.originalPrice && (
-                      <span className="text-sm text-muted-foreground line-through ml-2">
-                        ${product.originalPrice}
+                    <span className="font-semibold">${product.salePrice || product.price}</span>
+                    {product.salePrice && (
+                      <span className={`text-sm text-muted-foreground line-through ${isRTL ? 'mr-2' : 'ml-2'}`}>
+                        ${product.price}
                       </span>
                     )}
                   </td>
                   <td className={`px-4 py-3 ${isRTL ? 'text-right' : ''}`}>
                     <span
                       className={`px-2 py-1 rounded-full text-xs ${
-                        product.inStock
+                        product.sizes.some((s) => s.available)
                           ? 'bg-green-500/20 text-green-400'
                           : 'bg-red-500/20 text-red-400'
                       }`}
                     >
-                      {product.inStock ? t('product.in-stock') : t('product.out-of-stock')}
+                      {product.sizes.some((s) => s.available) ? translate(language, 'product.in-stock') : translate(language, 'product.out-of-stock')}
                     </span>
                   </td>
                   <td className={`px-4 py-3 ${isRTL ? 'text-left' : 'text-right'}`}>
                     <div className={`flex items-center gap-2 ${isRTL ? 'justify-start' : 'justify-end'}`}>
                       <button
                         onClick={() => handleEdit(product)}
-                        className="p-2 hover:bg-secondary rounded-lg transition-colors"
-                        title={t('dashboard.edit')}
+                        className="p-2 hover:bg-secondary rounded-lg transition-colors cursor-pointer"
+                        title={translate(language, 'dashboard.edit')}
                       >
                         <Edit2 className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => handleDelete(product.id)}
-                        className="p-2 hover:bg-destructive/20 text-destructive rounded-lg transition-colors"
-                        title={t('dashboard.delete')}
+                        className="p-2 hover:bg-destructive/20 text-destructive rounded-lg transition-colors cursor-pointer"
+                        title={translate(language, 'dashboard.delete')}
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -199,7 +199,7 @@ export default function ProductsPage() {
             <button
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               disabled={currentPage === 1}
-              className="p-2 rounded-lg hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed"
+              className="p-2 rounded-lg hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
               <ChevronLeft className={`w-5 h-5 ${isRTL ? 'rotate-180' : ''}`} />
             </button>
@@ -209,7 +209,7 @@ export default function ProductsPage() {
             <button
               onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
-              className="p-2 rounded-lg hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed"
+              className="p-2 rounded-lg hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
               <ChevronRight className={`w-5 h-5 ${isRTL ? 'rotate-180' : ''}`} />
             </button>
@@ -236,11 +236,11 @@ export default function ProductsPage() {
             >
               <div className={`flex items-center justify-between mb-6 ${isRTL ? 'flex-row-reverse' : ''}`}>
                 <h3 className="text-xl font-bold">
-                  {editingProduct ? t('dashboard.edit-product') : t('dashboard.add-product')}
+                  {editingProduct ? translate(language, 'dashboard.edit-product') : translate(language, 'dashboard.add-product')}
                 </h3>
                 <button
                   onClick={() => setIsModalOpen(false)}
-                  className="p-2 hover:bg-secondary rounded-lg"
+                  className="p-2 hover:bg-secondary rounded-lg cursor-pointer"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -299,15 +299,15 @@ export default function ProductsPage() {
                   <button
                     type="button"
                     onClick={() => setIsModalOpen(false)}
-                    className="flex-1 px-4 py-2 border border-border rounded-lg hover:bg-secondary transition-colors"
+                    className="flex-1 px-4 py-2 border border-border rounded-lg hover:bg-secondary transition-colors cursor-pointer"
                   >
-                    {t('dashboard.cancel')}
+                    {translate(language, 'dashboard.cancel')}
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 px-4 py-2 bg-accent text-accent-foreground rounded-lg hover:bg-accent/90 transition-colors"
+                    className="flex-1 px-4 py-2 bg-accent text-accent-foreground rounded-lg hover:bg-accent/90 transition-colors cursor-pointer"
                   >
-                    {t('dashboard.save')}
+                    {translate(language, 'dashboard.save')}
                   </button>
                 </div>
               </form>

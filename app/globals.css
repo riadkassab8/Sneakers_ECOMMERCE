@@ -91,6 +91,10 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  button, a, [role="button"], input[type="button"], input[type="submit"] {
+    cursor: pointer;
+  }
 }
 
 /* Arabic font class */
@@ -99,20 +103,8 @@
 }
 
 /* RTL Support */
-[dir="rtl"] {
-  text-align: right;
-}
-
 [dir="rtl"] .rtl\:space-x-reverse> :not([hidden])~ :not([hidden]) {
   --tw-space-x-reverse: 1;
-}
-
-[dir="rtl"] .flex-row {
-  flex-direction: row-reverse;
-}
-
-[dir="rtl"] .rtl\:flex-row-reverse {
-  flex-direction: row;
 }
 
 /* Custom scrollbar */

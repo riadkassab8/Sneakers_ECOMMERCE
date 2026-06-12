@@ -5,8 +5,8 @@ import Image from 'next/image'
 import { motion } from 'framer-motion'
 import { Heart, ShoppingBag, Star } from 'lucide-react'
 import { Product, useCartStore, useWishlistStore, useUIStore } from '@/lib/store'
-import { useState, useEffect } from 'react'
-import { useLanguageStore } from '@/lib/language-store'
+import { useState } from 'react'
+import { useLanguageStore, t as translate } from '@/lib/language-store'
 
 interface ProductCardProps {
   product: Product
@@ -14,18 +14,14 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product, index = 0 }: ProductCardProps) {
-  const { t } = useLanguageStore()
+  const { language } = useLanguageStore()
+  const isRTL = language === 'ar'
   const [imageIndex, setImageIndex] = useState(0)
   const [selectedSize, setSelectedSize] = useState<string | null>(null)
-  const [mounted, setMounted] = useState(false)
   const { addItem } = useCartStore()
   const { toggle, isWishlisted } = useWishlistStore()
   const { setCartOpen } = useUIStore()
-  const wishlisted = mounted ? isWishlisted(product.id) : false
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
+  const wishlisted = isWishlisted(product.id)
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault()
@@ -47,28 +43,27 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 40 }}
+      initial={{ opacity: 0, y: 12 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
-      transition={{ duration: 0.5, delay: index * 0.1 }}
+      transition={{ duration: 0.2, delay: Math.min(index * 0.03, 0.15) }}
     >
       <Link href={`/product/${product.id}`} className="group block">
         <div className="relative bg-card rounded-xl overflow-hidden">
-          {/* Badges */}
-          <div className="absolute top-3 left-3 z-10 flex flex-col gap-2">
+          <div className={`absolute top-3 z-10 flex flex-col gap-2 ${isRTL ? 'right-3' : 'left-3'}`}>
             {product.isNew && (
               <span className="px-2 py-1 bg-accent text-accent-foreground text-xs font-semibold rounded">
-                {t('product.new').toUpperCase()}
+                {translate(language, 'product.new').toUpperCase()}
               </span>
             )}
             {product.isLimited && (
               <span className="px-2 py-1 bg-destructive text-destructive-foreground text-xs font-semibold rounded">
-                {t('product.limited') || 'LIMITED'}
+                {translate(language, 'product.limited').toUpperCase()}
               </span>
             )}
             {product.salePrice && (
               <span className="px-2 py-1 bg-destructive text-destructive-foreground text-xs font-semibold rounded">
-                {t('product.sale').toUpperCase()}
+                {translate(language, 'product.sale').toUpperCase()}
               </span>
             )}
           </div>
@@ -76,7 +71,7 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
           {/* Wishlist Button */}
           <button
             onClick={handleToggleWishlist}
-            className="absolute top-3 right-3 z-10 p-2 bg-background/80 backdrop-blur-sm rounded-full hover:bg-background transition-colors"
+            className={`absolute top-3 ${isRTL ? 'left-3' : 'right-3'} z-10 p-2 bg-background/80 backdrop-blur-sm rounded-full hover:bg-background transition-colors cursor-pointer`}
           >
             <Heart
               className={`w-4 h-4 transition-colors ${wishlisted ? 'fill-destructive text-destructive' : 'text-foreground'
@@ -107,10 +102,10 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
             <button
               onClick={handleAddToCart}
               disabled={availableSizes.length === 0}
-              className="w-full py-3 bg-accent text-accent-foreground font-semibold rounded-lg flex items-center justify-center gap-2 hover:bg-accent/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-3 bg-accent text-accent-foreground font-semibold rounded-lg flex items-center justify-center gap-2 hover:bg-accent/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
               <ShoppingBag className="w-4 h-4" />
-              {availableSizes.length === 0 ? t('product.out-of-stock') : t('product.add-to-cart')}
+              {availableSizes.length === 0 ? translate(language, 'product.out-of-stock') : translate(language, 'product.add-to-cart')}
             </button>
           </motion.div>
         </div>
@@ -129,17 +124,17 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
           </div>
           <div className="flex items-center gap-2">
             <span className="font-semibold text-accent">
-              ${product.salePrice || product.price}
+              {product.salePrice || product.price} ج.م
             </span>
             {product.salePrice && (
               <span className="text-sm text-muted-foreground line-through">
-                ${product.price}
+                {product.price} ج.م
               </span>
             )}
           </div>
 
           {/* Size dots */}
-          <div className="flex gap-1 pt-2">
+          <div className={`flex gap-1 pt-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
             {product.sizes.slice(0, 6).map((size) => (
               <span
                 key={size.size}
